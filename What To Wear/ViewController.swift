@@ -18,10 +18,7 @@ class ViewController: UIViewController {
 
     // Take Picture with Button    /
     @IBAction func snapClick(sender: AnyObject) {
-
-        //
         self.startSnap()
-
     }
 
     func startSnap() {
@@ -31,6 +28,7 @@ class ViewController: UIViewController {
         startTime = NSDate.timeIntervalSinceReferenceDate()
         
     }
+    
 
     func updateTime() {
         var currentTime = NSDate.timeIntervalSinceReferenceDate()
@@ -111,9 +109,12 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        // Custom Font
+        self.countdown.font = UIFont (name: "BadaBoom BB", size: 92)
+
+
         // Do any additional setup after loading the view, typically from a nib.
         captureSession.sessionPreset = AVCaptureSessionPresetHigh
-
         let devices = AVCaptureDevice.devices()
 
         // Loop through all the capture devices on this phone

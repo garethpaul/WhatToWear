@@ -9,12 +9,16 @@
 /* Begin PBXBuildFile section */
 		CE8563C375038CD500B21CC4 /* libPods-What To Wear.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E7B354091E0EF1F69F00716 /* libPods-What To Wear.a */; };
 		FD66FEE11A747E130089AA33 /* DisplayImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD66FEE01A747E130089AA33 /* DisplayImage.swift */; };
+		FD66FEEC1A74A2AB0089AA33 /* BADABB__.TTF in Resources */ = {isa = PBXBuildFile; fileRef = FD66FEEB1A74A2980089AA33 /* BADABB__.TTF */; };
 		FD812E2E1A732D8300A98C15 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD812E2D1A732D8300A98C15 /* AppDelegate.swift */; };
 		FD812E301A732D8300A98C15 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD812E2F1A732D8300A98C15 /* ViewController.swift */; };
 		FD812E331A732D8300A98C15 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = FD812E311A732D8300A98C15 /* Main.storyboard */; };
 		FD812E351A732D8300A98C15 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FD812E341A732D8300A98C15 /* Images.xcassets */; };
 		FD812E381A732D8300A98C15 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = FD812E361A732D8300A98C15 /* LaunchScreen.xib */; };
 		FD812E441A732D8300A98C15 /* What_To_WearTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD812E431A732D8300A98C15 /* What_To_WearTests.swift */; };
+		FD812E511A74C75000A98C15 /* Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD812E501A74C75000A98C15 /* Hex.swift */; };
+		FDD05A421A74E192005DAAA2 /* WhatToWear.icns in Resources */ = {isa = PBXBuildFile; fileRef = FDD05A411A74E192005DAAA2 /* WhatToWear.icns */; };
+		FDD05A441A74E20D005DAAA2 /* WhatToWear.icns in Resources */ = {isa = PBXBuildFile; fileRef = FDD05A431A74E20D005DAAA2 /* WhatToWear.icns */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,6 +36,7 @@
 		1E7B354091E0EF1F69F00716 /* libPods-What To Wear.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-What To Wear.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		57638340481B5E9EBB5AFC47 /* Pods-What To Wear.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-What To Wear.release.xcconfig"; path = "Pods/Target Support Files/Pods-What To Wear/Pods-What To Wear.release.xcconfig"; sourceTree = "<group>"; };
 		FD66FEE01A747E130089AA33 /* DisplayImage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DisplayImage.swift; sourceTree = "<group>"; };
+		FD66FEEB1A74A2980089AA33 /* BADABB__.TTF */ = {isa = PBXFileReference; lastKnownFileType = file; name = BADABB__.TTF; path = ../../../../Downloads/badaboom_bb/BADABB__.TTF; sourceTree = "<group>"; };
 		FD812E281A732D8300A98C15 /* What To Wear.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "What To Wear.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		FD812E2C1A732D8300A98C15 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		FD812E2D1A732D8300A98C15 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -43,6 +48,9 @@
 		FD812E421A732D8300A98C15 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		FD812E431A732D8300A98C15 /* What_To_WearTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = What_To_WearTests.swift; sourceTree = "<group>"; };
 		FD812E4F1A73306900A98C15 /* BridgeHeader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = BridgeHeader.h; path = ../BridgeHeader.h; sourceTree = "<group>"; };
+		FD812E501A74C75000A98C15 /* Hex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Hex.swift; sourceTree = "<group>"; };
+		FDD05A411A74E192005DAAA2 /* WhatToWear.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = WhatToWear.icns; path = ../../../Assets/WhatToWear.icns; sourceTree = "<group>"; };
+		FDD05A431A74E20D005DAAA2 /* WhatToWear.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = WhatToWear.icns; path = ../../../../Assets/WhatToWear.icns; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -84,6 +92,7 @@
 		FD812E1F1A732D8300A98C15 = {
 			isa = PBXGroup;
 			children = (
+				FDD05A411A74E192005DAAA2 /* WhatToWear.icns */,
 				FD812E2A1A732D8300A98C15 /* What To Wear */,
 				FD812E401A732D8300A98C15 /* What To WearTests */,
 				FD812E291A732D8300A98C15 /* Products */,
@@ -104,9 +113,12 @@
 		FD812E2A1A732D8300A98C15 /* What To Wear */ = {
 			isa = PBXGroup;
 			children = (
+				FD66FEEB1A74A2980089AA33 /* BADABB__.TTF */,
+				FDD05A431A74E20D005DAAA2 /* WhatToWear.icns */,
 				FD812E4F1A73306900A98C15 /* BridgeHeader.h */,
 				FD812E2D1A732D8300A98C15 /* AppDelegate.swift */,
 				FD812E2F1A732D8300A98C15 /* ViewController.swift */,
+				FD812E501A74C75000A98C15 /* Hex.swift */,
 				FD66FEE01A747E130089AA33 /* DisplayImage.swift */,
 				FD812E311A732D8300A98C15 /* Main.storyboard */,
 				FD812E341A732D8300A98C15 /* Images.xcassets */,
@@ -223,9 +235,12 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FDD05A441A74E20D005DAAA2 /* WhatToWear.icns in Resources */,
+				FDD05A421A74E192005DAAA2 /* WhatToWear.icns in Resources */,
 				FD812E331A732D8300A98C15 /* Main.storyboard in Resources */,
 				FD812E381A732D8300A98C15 /* LaunchScreen.xib in Resources */,
 				FD812E351A732D8300A98C15 /* Images.xcassets in Resources */,
+				FD66FEEC1A74A2AB0089AA33 /* BADABB__.TTF in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -277,6 +292,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FD812E301A732D8300A98C15 /* ViewController.swift in Sources */,
+				FD812E511A74C75000A98C15 /* Hex.swift in Sources */,
 				FD66FEE11A747E130089AA33 /* DisplayImage.swift in Sources */,
 				FD812E2E1A732D8300A98C15 /* AppDelegate.swift in Sources */,
 			);
@@ -354,7 +370,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-lc++ ";
@@ -391,8 +407,9 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-lc++ ";
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
@@ -405,6 +422,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = "What To Wear/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "/Users/gjones/Dropbox/workspace/github/What To Wear/BridgeHeader.h";
@@ -417,6 +435,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = "What To Wear/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				"SWIFT_OBJC_BRIDGING_HEADER[arch=*]" = "/Users/gjones/Dropbox/workspace/github/What To Wear/BridgeHeader.h";
