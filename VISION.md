@@ -37,7 +37,7 @@ Contribution rules:
 Photos can be highly sensitive. The app should keep captures local by default,
 avoid hidden uploads, and make deletion or retention behavior clear.
 
-## What We Will Not Merge For Now
+## What We Will Not Merge (For Now)
 
 - Silent image upload or sharing
 - Real user photos in fixtures
