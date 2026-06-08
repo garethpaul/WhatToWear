@@ -43,3 +43,6 @@ avoid hidden uploads, and make deletion or retention behavior clear.
 - Real user photos in fixtures
 - Hidden analytics
 - Storage changes without privacy notes
+
+This list is a roadmap guardrail, not a permanent rule.
+Strong user demand and strong technical rationale can change it.
