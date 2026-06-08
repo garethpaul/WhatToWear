@@ -38,7 +38,6 @@ Canonical security policy and reporting:
 
 - [`SECURITY.md`](SECURITY.md)
 
-
 Photos can be highly sensitive. The app should keep captures local by default,
 avoid hidden uploads, and make deletion or retention behavior clear.
 
