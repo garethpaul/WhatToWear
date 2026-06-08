@@ -1,0 +1,45 @@
+## WhatToWear Vision
+
+WhatToWear is a legacy iOS camera app that starts a countdown, captures a front
+camera photo, saves it locally, and moves to a display flow.
+
+The repository is useful as a small AVCapture and countdown prototype for a
+camera-driven outfit or style app.
+
+The goal is to preserve the camera prototype while making privacy, storage, and
+Swift/iOS legacy assumptions explicit.
+
+The current focus is:
+
+Priority:
+
+- Preserve the countdown-to-photo capture flow
+- Keep captured images local to the app documents directory
+- Make camera permission and storage behavior explicit
+- Treat Swift and AVFoundation APIs as legacy until documented
+
+Next priorities:
+
+- Add README setup and privacy notes
+- Add controls for retake, delete, and image lifecycle
+- Modernize camera APIs in a dedicated compatibility pass
+- Add simulator/device verification notes
+
+Contribution rules:
+
+- One PR = one focused camera, timer, storage, UI, or documentation change.
+- Do not commit user photos.
+- Keep uploads and sharing out unless explicitly designed.
+- Include device notes for camera behavior changes.
+
+## Security And Responsible Use
+
+Photos can be highly sensitive. The app should keep captures local by default,
+avoid hidden uploads, and make deletion or retention behavior clear.
+
+## What We Will Not Merge For Now
+
+- Silent image upload or sharing
+- Real user photos in fixtures
+- Hidden analytics
+- Storage changes without privacy notes
