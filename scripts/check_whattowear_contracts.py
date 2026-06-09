@@ -50,7 +50,9 @@ def test_captures_remain_local_to_documents_directory():
 
 def test_completed_plan_is_in_docs_plans():
     assert_true(PLAN_PATH.is_file(), "camera privacy plan must live under docs/plans")
-    assert_true("status: completed" in PLAN_PATH.read_text(), "camera privacy plan must be completed")
+    plan_text = PLAN_PATH.read_text()
+    assert_true("status: completed" in plan_text.lower(), "camera privacy plan must be completed")
+    assert_true("make check" in plan_text, "camera privacy plan must document make check verification")
 
 
 def main():
