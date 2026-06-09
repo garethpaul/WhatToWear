@@ -178,19 +178,26 @@ class ViewController: UIViewController {
         configureDevice()
         stillImageOutput = AVCaptureStillImageOutput()
         let outputSettings = [ AVVideoCodecKey : AVVideoCodecJPEG ]
-        stillImageOutput!.outputSettings = outputSettings
 
-        // add output to session
-        if captureSession.canAddOutput(stillImageOutput) {
-            captureSession.addOutput(stillImageOutput)
+        if let stillOutput = stillImageOutput {
+            stillOutput.outputSettings = outputSettings
+
+            // add output to session
+            if captureSession.canAddOutput(stillOutput) {
+                captureSession.addOutput(stillOutput)
+            }
         }
         
 
-        var err : NSError? = nil
-        captureSession.addInput(AVCaptureDeviceInput(device: captureDevice, error: &err))
+        if let cameraDevice = captureDevice {
+            var err : NSError? = nil
+            let input = AVCaptureDeviceInput(device: cameraDevice, error: &err)
 
-        if err != nil {
-            println("error: \(err?.localizedDescription)")
+            if err != nil {
+                println("error: \(err?.localizedDescription)")
+            } else if input != nil && captureSession.canAddInput(input) {
+                captureSession.addInput(input)
+            }
         }
 
         previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)

@@ -14,6 +14,7 @@ CAPTURE_GUARDS_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-08-camera-capture-
 DISPLAY_IMAGE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-08-display-image-load-guard.md"
 LAUNCH_MASK_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-launch-mask-guards.md"
 INPUT_PORTS_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-camera-input-port-guards.md"
+SESSION_INPUT_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-camera-session-input-guards.md"
 
 EXPECTED_CAMERA_DESCRIPTION = (
     "WhatToWear uses the camera to capture a local outfit photo for preview."
@@ -96,6 +97,39 @@ def test_camera_capture_guards_connection_input_ports():
     )
 
 
+def test_camera_session_guards_input_and_output_setup():
+    source = VIEW_CONTROLLER.read_text()
+
+    assert_true(
+        "stillImageOutput!" not in source,
+        "camera session setup must not force-unwrap the still image output",
+    )
+    assert_true(
+        "if let stillOutput = stillImageOutput" in source,
+        "camera session setup must guard the still image output",
+    )
+    assert_true(
+        "captureSession.canAddOutput(stillOutput)" in source,
+        "camera session setup must check whether the output can be added",
+    )
+    assert_true(
+        "captureSession.addInput(AVCaptureDeviceInput(device: captureDevice" not in source,
+        "camera session setup must not add an unguarded camera device input",
+    )
+    assert_true(
+        "if let cameraDevice = captureDevice" in source,
+        "camera session setup must guard the optional capture device",
+    )
+    assert_true(
+        "let input = AVCaptureDeviceInput(device: cameraDevice, error: &err)" in source,
+        "camera session setup must create input from the guarded capture device",
+    )
+    assert_true(
+        "captureSession.canAddInput(input)" in source and "captureSession.addInput(input)" in source,
+        "camera session setup must check canAddInput before adding the input",
+    )
+
+
 def test_display_image_loads_capture_safely():
     source = DISPLAY_IMAGE.read_text()
     source_without_spaces = source.replace(" ", "")
@@ -160,6 +194,7 @@ def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(DISPLAY_IMAGE_PLAN_PATH, "display image load guard")
     assert_completed_plan(LAUNCH_MASK_PLAN_PATH, "launch mask guards")
     assert_completed_plan(INPUT_PORTS_PLAN_PATH, "camera input port guards")
+    assert_completed_plan(SESSION_INPUT_PLAN_PATH, "camera session input guards")
 
 
 def main():
@@ -168,6 +203,7 @@ def main():
         test_captures_remain_local_to_documents_directory,
         test_camera_capture_guards_nil_buffers_and_jpegs,
         test_camera_capture_guards_connection_input_ports,
+        test_camera_session_guards_input_and_output_setup,
         test_display_image_loads_capture_safely,
         test_launch_mask_guards_optional_window_and_assets,
         test_completed_plans_are_in_docs_plans,
