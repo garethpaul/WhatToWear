@@ -5,6 +5,8 @@
 - Guarded camera session output and input setup before adding them to the
   capture session.
 - Added static checker coverage for capture session input and output guards.
+- Guarded focus touch handlers before reading touch locations.
+- Added static checker coverage for optional focus touch handling.
 - Guarded optional AVCapture connection input ports before scanning for the
   video capture connection.
 - Added static checker coverage for camera input-port guards.

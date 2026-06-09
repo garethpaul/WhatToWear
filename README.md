@@ -48,7 +48,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 - `make verify` runs static camera privacy, local-storage, capture, display
   image, capture input-port, camera session input/output, and app-launch mask
-  checks and attempts an Xcode build when `xcodebuild` is available.
+  and focus touch checks and attempts an Xcode build when `xcodebuild` is
+  available.
 - `make check` runs `make verify` with bytecode cleanup before and after.
 - `python3 scripts/check_whattowear_contracts.py` runs just the camera privacy and local-storage contracts.
 - Completed maintenance plans live under `docs/plans` and are checked by
@@ -86,6 +87,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   AVCapture connection input-port guard coverage.
 - See `docs/plans/2026-06-09-camera-session-input-guards.md` for guarded
   capture session input and output setup.
+- See `docs/plans/2026-06-09-focus-touch-guards.md` for guarded touch handling
+  in the camera focus controls.
 
 ## Contributing
 

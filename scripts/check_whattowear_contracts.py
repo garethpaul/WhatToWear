@@ -15,6 +15,7 @@ DISPLAY_IMAGE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-08-display-image-lo
 LAUNCH_MASK_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-launch-mask-guards.md"
 INPUT_PORTS_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-camera-input-port-guards.md"
 SESSION_INPUT_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-camera-session-input-guards.md"
+FOCUS_TOUCH_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-focus-touch-guards.md"
 
 EXPECTED_CAMERA_DESCRIPTION = (
     "WhatToWear uses the camera to capture a local outfit photo for preview."
@@ -130,6 +131,23 @@ def test_camera_session_guards_input_and_output_setup():
     )
 
 
+def test_focus_touch_handlers_guard_optional_touches():
+    source = VIEW_CONTROLLER.read_text()
+
+    assert_true(
+        "touches.anyObject() as UITouch" not in source,
+        "focus touch handlers must not force-cast optional touch objects",
+    )
+    assert_true(
+        source.count("if let touch = touches.anyObject() as? UITouch") >= 2,
+        "focus touch handlers must guard optional touch objects",
+    )
+    assert_true(
+        "touch.locationInView(self.view).x / screenWidth" in source,
+        "focus touch handlers must keep using the guarded touch location",
+    )
+
+
 def test_display_image_loads_capture_safely():
     source = DISPLAY_IMAGE.read_text()
     source_without_spaces = source.replace(" ", "")
@@ -195,6 +213,7 @@ def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(LAUNCH_MASK_PLAN_PATH, "launch mask guards")
     assert_completed_plan(INPUT_PORTS_PLAN_PATH, "camera input port guards")
     assert_completed_plan(SESSION_INPUT_PLAN_PATH, "camera session input guards")
+    assert_completed_plan(FOCUS_TOUCH_PLAN_PATH, "focus touch guards")
 
 
 def main():
@@ -204,6 +223,7 @@ def main():
         test_camera_capture_guards_nil_buffers_and_jpegs,
         test_camera_capture_guards_connection_input_ports,
         test_camera_session_guards_input_and_output_setup,
+        test_focus_touch_handlers_guard_optional_touches,
         test_display_image_loads_capture_safely,
         test_launch_mask_guards_optional_window_and_assets,
         test_completed_plans_are_in_docs_plans,

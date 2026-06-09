@@ -152,16 +152,18 @@ class ViewController: UIViewController {
 
     let screenWidth = UIScreen.mainScreen().bounds.size.width
     override func touchesBegan(touches: NSSet, withEvent event: UIEvent) {
-        var anyTouch = touches.anyObject() as UITouch
-        var touchPercent = anyTouch.locationInView(self.view).x / screenWidth
-        focusTo(Float(touchPercent))
+        if let touch = touches.anyObject() as? UITouch {
+            var touchPercent = touch.locationInView(self.view).x / screenWidth
+            focusTo(Float(touchPercent))
+        }
         
     }
 
     override func touchesMoved(touches: NSSet, withEvent event: UIEvent) {
-        var anyTouch = touches.anyObject() as UITouch
-        var touchPercent = anyTouch.locationInView(self.view).x / screenWidth
-        focusTo(Float(touchPercent))
+        if let touch = touches.anyObject() as? UITouch {
+            var touchPercent = touch.locationInView(self.view).x / screenWidth
+            focusTo(Float(touchPercent))
+        }
     }
 
     func configureDevice() {
