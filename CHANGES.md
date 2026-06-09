@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-09
+
+- Guarded app launch window, mask layer, and launch mask image setup instead of
+  force-unwrapping optional startup state.
+- Added static checker coverage for launch mask optional guards.
+
 ## 2026-06-08
 
 - Guarded saved image loading in the display flow and added a missing-photo

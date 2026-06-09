@@ -27,25 +27,28 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // instantiate your desired ViewController
         let rootController = storyboard.instantiateViewControllerWithIdentifier("ViewController") as UIViewController
 
-        // Because self.window is an optional you should check it's value first and assign your rootViewController
-        if self.window != nil {
-            self.window!.rootViewController = rootController
+        if let window = self.window {
+            window.rootViewController = rootController
+
+            let imageView = UIImageView(frame: window.frame)
+            window.addSubview(imageView)
+
+            self.mask = CALayer()
+            if let maskLayer = self.mask {
+                if let maskImage = UIImage(named: "whatToWearWhite") {
+                    maskLayer.contents = maskImage.CGImage
+                    maskLayer.bounds = CGRect(x: 0, y: 0, width: 100, height: 100)
+                    maskLayer.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+                    maskLayer.position = CGPoint(x: window.frame.width/2, y: window.frame.height/2)
+
+                    window.layer.mask = maskLayer
+                    animateMask()
+                }
+            }
+
+            window.backgroundColor = UIColor(red: 70/255, green: 154/255, blue: 233/255, alpha: 1)
+            window.makeKeyAndVisible()
         }
-
-        let imageView = UIImageView(frame: self.window!.frame)
-        self.window!.addSubview(imageView)
-
-        self.mask = CALayer()
-        self.mask!.contents = UIImage(named: "whatToWearWhite")!.CGImage
-        self.mask!.bounds = CGRect(x: 0, y: 0, width: 100, height: 100)
-        self.mask!.anchorPoint = CGPoint(x: 0.5, y: 0.5)
-        self.mask!.position = CGPoint(x: self.window!.frame.width/2, y: self.window!.frame.height/2)
-
-        self.window?.layer.mask = mask
-        animateMask()
-
-        self.window!.backgroundColor = UIColor(red: 70/255, green: 154/255, blue: 233/255, alpha: 1)
-        self.window!.makeKeyAndVisible()
 
         UIApplication.sharedApplication().statusBarHidden = true
 
@@ -75,17 +78,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func animateMask() {
-        let keyFrameAnimation = CAKeyframeAnimation(keyPath: "bounds")
-        keyFrameAnimation.delegate = self
-        keyFrameAnimation.duration = 0.6
-        keyFrameAnimation.beginTime = CACurrentMediaTime() + 3 //add delay of 1 second
-        let initalBounds = NSValue(CGRect: mask!.bounds)
-        let secondBounds = NSValue(CGRect: CGRect(x: 0, y: 0, width: 90, height: 90))
-        let finalBounds = NSValue(CGRect: CGRect(x: 0, y: 0, width: 2500, height: 2500))
-        keyFrameAnimation.values = [initalBounds, secondBounds, finalBounds]
-        keyFrameAnimation.keyTimes = [0, 0.3, 0.6]
-        keyFrameAnimation.timingFunctions = [CAMediaTimingFunction(name: kCAMediaTimingFunctionEaseInEaseOut), CAMediaTimingFunction(name: kCAMediaTimingFunctionEaseOut)]
-        self.mask!.addAnimation(keyFrameAnimation, forKey: "bounds")
+        if let maskLayer = self.mask {
+            let keyFrameAnimation = CAKeyframeAnimation(keyPath: "bounds")
+            keyFrameAnimation.delegate = self
+            keyFrameAnimation.duration = 0.6
+            keyFrameAnimation.beginTime = CACurrentMediaTime() + 3 //add delay of 1 second
+            let initalBounds = NSValue(CGRect: maskLayer.bounds)
+            let secondBounds = NSValue(CGRect: CGRect(x: 0, y: 0, width: 90, height: 90))
+            let finalBounds = NSValue(CGRect: CGRect(x: 0, y: 0, width: 2500, height: 2500))
+            keyFrameAnimation.values = [initalBounds, secondBounds, finalBounds]
+            keyFrameAnimation.keyTimes = [0, 0.3, 0.6]
+            keyFrameAnimation.timingFunctions = [CAMediaTimingFunction(name: kCAMediaTimingFunctionEaseInEaseOut), CAMediaTimingFunction(name: kCAMediaTimingFunctionEaseOut)]
+            maskLayer.addAnimation(keyFrameAnimation, forKey: "bounds")
+        }
     }
 
     override func animationDidStop(anim: CAAnimation!, finished flag: Bool) {
@@ -94,4 +99,3 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
 }
-
