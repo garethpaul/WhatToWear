@@ -78,9 +78,10 @@ def test_camera_capture_guards_nil_buffers_and_jpegs():
 
 def test_display_image_loads_capture_safely():
     source = DISPLAY_IMAGE.read_text()
+    source_without_spaces = source.replace(" ", "")
 
     assert_true(
-        "UIImage(contentsOfFile: destinationPath)" in source,
+        "UIImage(contentsOfFile:destinationPath)" in source_without_spaces,
         "display flow must load the saved local capture path",
     )
     assert_true(
