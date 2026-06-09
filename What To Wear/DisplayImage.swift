@@ -25,13 +25,16 @@ class DisplayImage: UIViewController {
         // load image from "camera" into the UIImage
         let documentsPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as String
         let destinationPath = documentsPath.stringByAppendingPathComponent("what_to_wear.jpg")
-        let image = UIImage(contentsOfFile: destinationPath )
+        if let image = UIImage(contentsOfFile: destinationPath) {
+            // image needs to be flipped to get the view intended form the selfie
+            let flippedImage = UIImage(CGImage: image.CGImage, scale: 1.0, orientation: .LeftMirrored)
 
-        // image needs to be flipped to get the view intended form the selfie
-        let flippedImage = UIImage(CGImage: image!.CGImage, scale: 1.0, orientation: .LeftMirrored)
-
-        // display image
-        self.imageView.image = flippedImage
+            // display image
+            self.imageView.image = flippedImage
+        } else {
+            self.message.text = "No photo available"
+            self.suggestedColors.hidden = true
+        }
 
     }
 

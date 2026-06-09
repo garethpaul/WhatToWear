@@ -16,6 +16,7 @@ Priority:
 - Preserve the countdown-to-photo capture flow
 - Keep captured images local to the app documents directory
 - Make camera permission and storage behavior explicit
+- Show a fallback if the saved local capture cannot be displayed
 - Treat Swift and AVFoundation APIs as legacy until documented
 
 Next priorities:

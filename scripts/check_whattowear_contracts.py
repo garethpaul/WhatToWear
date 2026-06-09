@@ -7,8 +7,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 APP_PLIST = ROOT / "What To Wear" / "Info.plist"
 VIEW_CONTROLLER = ROOT / "What To Wear" / "ViewController.swift"
+DISPLAY_IMAGE = ROOT / "What To Wear" / "DisplayImage.swift"
 CAMERA_PRIVACY_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-08-camera-privacy-contract.md"
 CAPTURE_GUARDS_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-08-camera-capture-guards.md"
+DISPLAY_IMAGE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-08-display-image-load-guard.md"
 
 EXPECTED_CAMERA_DESCRIPTION = (
     "WhatToWear uses the camera to capture a local outfit photo for preview."
@@ -74,6 +76,27 @@ def test_camera_capture_guards_nil_buffers_and_jpegs():
     )
 
 
+def test_display_image_loads_capture_safely():
+    source = DISPLAY_IMAGE.read_text()
+
+    assert_true(
+        "UIImage(contentsOfFile: destinationPath)" in source,
+        "display flow must load the saved local capture path",
+    )
+    assert_true(
+        "if let image = UIImage(contentsOfFile: destinationPath)" in source,
+        "display flow must guard saved image loading",
+    )
+    assert_true(
+        "image!.CGImage" not in source,
+        "display flow must not force-unwrap the saved image",
+    )
+    assert_true(
+        '"No photo available"' in source and "suggestedColors.hidden = true" in source,
+        "display flow must show a fallback when the local capture is missing",
+    )
+
+
 def assert_completed_plan(path, label):
     assert_true(path.is_file(), "{0} plan must live under docs/plans".format(label))
     plan_text = path.read_text()
@@ -84,6 +107,7 @@ def assert_completed_plan(path, label):
 def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(CAMERA_PRIVACY_PLAN_PATH, "camera privacy")
     assert_completed_plan(CAPTURE_GUARDS_PLAN_PATH, "camera capture guards")
+    assert_completed_plan(DISPLAY_IMAGE_PLAN_PATH, "display image load guard")
 
 
 def main():
@@ -91,6 +115,7 @@ def main():
         test_camera_usage_description_is_declared,
         test_captures_remain_local_to_documents_directory,
         test_camera_capture_guards_nil_buffers_and_jpegs,
+        test_display_image_loads_capture_safely,
         test_completed_plans_are_in_docs_plans,
     ]
     for test in tests:

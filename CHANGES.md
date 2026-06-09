@@ -2,6 +2,8 @@
 
 ## 2026-06-08
 
+- Guarded saved image loading in the display flow and added a missing-photo
+  fallback.
 - Guarded camera capture failures, image conversion, and display navigation.
 - Tightened docs-plan verification to require recorded `make check` evidence.
 - Added a camera usage description to the app plist.
