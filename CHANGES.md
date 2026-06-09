@@ -2,6 +2,9 @@
 
 ## 2026-06-09
 
+- Guarded optional AVCapture connection input ports before scanning for the
+  video capture connection.
+- Added static checker coverage for camera input-port guards.
 - Guarded app launch window, mask layer, and launch mask image setup instead of
   force-unwrapping optional startup state.
 - Added static checker coverage for launch mask optional guards.

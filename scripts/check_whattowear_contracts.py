@@ -13,6 +13,7 @@ CAMERA_PRIVACY_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-08-camera-privacy-
 CAPTURE_GUARDS_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-08-camera-capture-guards.md"
 DISPLAY_IMAGE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-08-display-image-load-guard.md"
 LAUNCH_MASK_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-launch-mask-guards.md"
+INPUT_PORTS_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-camera-input-port-guards.md"
 
 EXPECTED_CAMERA_DESCRIPTION = (
     "WhatToWear uses the camera to capture a local outfit photo for preview."
@@ -75,6 +76,23 @@ def test_camera_capture_guards_nil_buffers_and_jpegs():
     assert_true(
         "dispatch_async(dispatch_get_main_queue())" in source,
         "segue must be dispatched back to the main queue",
+    )
+
+
+def test_camera_capture_guards_connection_input_ports():
+    source = VIEW_CONTROLLER.read_text()
+
+    assert_true(
+        "connection.inputPorts!" not in source,
+        "capture connection scanning must not force-unwrap input ports",
+    )
+    assert_true(
+        "if let inputPorts = connection.inputPorts" in source,
+        "capture connection scanning must guard optional input ports",
+    )
+    assert_true(
+        "for port in inputPorts" in source,
+        "capture connection scanning must iterate the guarded input ports",
     )
 
 
@@ -141,6 +159,7 @@ def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(CAPTURE_GUARDS_PLAN_PATH, "camera capture guards")
     assert_completed_plan(DISPLAY_IMAGE_PLAN_PATH, "display image load guard")
     assert_completed_plan(LAUNCH_MASK_PLAN_PATH, "launch mask guards")
+    assert_completed_plan(INPUT_PORTS_PLAN_PATH, "camera input port guards")
 
 
 def main():
@@ -148,6 +167,7 @@ def main():
         test_camera_usage_description_is_declared,
         test_captures_remain_local_to_documents_directory,
         test_camera_capture_guards_nil_buffers_and_jpegs,
+        test_camera_capture_guards_connection_input_ports,
         test_display_image_loads_capture_safely,
         test_launch_mask_guards_optional_window_and_assets,
         test_completed_plans_are_in_docs_plans,

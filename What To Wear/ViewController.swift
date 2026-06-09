@@ -54,11 +54,13 @@ class ViewController: UIViewController {
                     var videoConnection : AVCaptureConnection?
                     for connection in stillOutput.connections {
                         // find a matching input port
-                        for port in connection.inputPorts! {
-                            // and matching type
-                            if port.mediaType == AVMediaTypeVideo {
-                                videoConnection = connection as? AVCaptureConnection
-                                break
+                        if let inputPorts = connection.inputPorts {
+                            for port in inputPorts {
+                                // and matching type
+                                if port.mediaType == AVMediaTypeVideo {
+                                    videoConnection = connection as? AVCaptureConnection
+                                    break
+                                }
                             }
                         }
                         if videoConnection != nil {
