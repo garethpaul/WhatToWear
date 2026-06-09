@@ -74,6 +74,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `VISION.md` for project direction and contribution guardrails.
 - See `docs/plans/2026-06-08-camera-privacy-contract.md` for the current
   camera privacy baseline.
+- See `docs/plans/2026-06-08-camera-capture-guards.md` for the camera capture
+  failure and image-conversion guard contract.
 
 ## Contributing
 

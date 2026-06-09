@@ -69,11 +69,15 @@ class ViewController: UIViewController {
                     if videoConnection != nil {
                         // found the video connection, let's get the image
                         stillOutput.captureStillImageAsynchronouslyFromConnection(videoConnection) {
-                            (imageSampleBuffer:CMSampleBuffer!, _) in
+                            (imageSampleBuffer:CMSampleBuffer!, error:NSError!) in
 
-                            let imageData = AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation(imageSampleBuffer)
-                            self.didTakePhoto(imageData)
+                            if error != nil || imageSampleBuffer == nil {
+                                return
+                            }
 
+                            if let imageData = AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation(imageSampleBuffer) {
+                                self.didTakePhoto(imageData)
+                            }
 
 
 
@@ -89,14 +93,16 @@ class ViewController: UIViewController {
 
     func didTakePhoto(imageData: NSData) {
         // parse not dropbox
-        let image = UIImage(data: imageData)
-
-
-        let documentsPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as String
-        let destinationPath = documentsPath.stringByAppendingPathComponent("what_to_wear.jpg")
-        UIImageJPEGRepresentation(image,1.0).writeToFile(destinationPath, atomically: true)
-
-        self.performSegueWithIdentifier("displayImage", sender: self);
+        if let image = UIImage(data: imageData) {
+            let documentsPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as String
+            let destinationPath = documentsPath.stringByAppendingPathComponent("what_to_wear.jpg")
+            if let jpegData = UIImageJPEGRepresentation(image,1.0) {
+                jpegData.writeToFile(destinationPath, atomically: true)
+                dispatch_async(dispatch_get_main_queue()) {
+                    self.performSegueWithIdentifier("displayImage", sender: self);
+                }
+            }
+        }
 
 
 

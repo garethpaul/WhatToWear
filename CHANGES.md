@@ -2,6 +2,7 @@
 
 ## 2026-06-08
 
+- Guarded camera capture failures, image conversion, and display navigation.
 - Tightened docs-plan verification to require recorded `make check` evidence.
 - Added a camera usage description to the app plist.
 - Added dependency-free camera privacy and local-storage contract checks.
