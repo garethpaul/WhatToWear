@@ -3,6 +3,11 @@
 <!-- README-OVERVIEW-IMAGE -->
 ![Project overview](docs/readme-overview.svg)
 
+## Device Preview
+
+<!-- DEVICE-PREVIEW-IMAGE -->
+![Device preview](docs/device-preview.svg)
+
 ## Overview
 
 `garethpaul/WhatToWear` is an Apple platform application or Objective-C/Swift sample. Sample App What To Wear
