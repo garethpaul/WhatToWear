@@ -23,6 +23,10 @@ class ViewController: UIViewController {
 
     func startSnap() {
 
+        if timer.valid {
+            return
+        }
+
         let aSelector : Selector = "updateTime"
         timer = NSTimer.scheduledTimerWithTimeInterval(1, target: self, selector: aSelector, userInfo: nil, repeats: true)
         startTime = NSDate.timeIntervalSinceReferenceDate()

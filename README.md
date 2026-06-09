@@ -48,10 +48,11 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 - `make verify` runs static camera privacy, local-storage, capture, display
   image, capture input-port, camera session input/output, and app-launch mask
-  and focus touch checks and attempts an Xcode build when `xcodebuild` is
-  available.
+  focus touch, and countdown timer checks and attempts an Xcode build when
+  `xcodebuild` is available.
 - `make check` runs `make verify` with bytecode cleanup before and after.
-- `python3 scripts/check_whattowear_contracts.py` runs just the camera privacy and local-storage contracts.
+- `python3 scripts/check_whattowear_contracts.py` runs the static
+  WhatToWear contracts without the optional Xcode build.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.
 - Xcode's test action or `xcodebuild test` can be used with the appropriate scheme and destination on a macOS/Xcode workstation.
@@ -89,6 +90,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   capture session input and output setup.
 - See `docs/plans/2026-06-09-focus-touch-guards.md` for guarded touch handling
   in the camera focus controls.
+- See `docs/plans/2026-06-09-countdown-timer-guard.md` for duplicate countdown
+  timer prevention.
 
 ## Contributing
 

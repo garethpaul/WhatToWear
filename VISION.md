@@ -19,6 +19,7 @@ Priority:
 - Guard optional camera connection data before capture
 - Guard camera session inputs and outputs before adding them
 - Guard optional focus touch data before moving camera focus
+- Prevent repeated snap taps from starting overlapping countdown timers
 - Show a fallback if the saved local capture cannot be displayed
 - Avoid force-unwrapping app-launch mask assets and optional startup state
 - Treat Swift and AVFoundation APIs as legacy until documented

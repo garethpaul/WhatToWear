@@ -2,6 +2,9 @@
 
 ## 2026-06-09
 
+- Guarded countdown start so repeated snap taps cannot schedule overlapping
+  capture timers.
+- Added static checker coverage for duplicate countdown timer prevention.
 - Guarded camera session output and input setup before adding them to the
   capture session.
 - Added static checker coverage for capture session input and output guards.
