@@ -2,6 +2,9 @@
 
 ## 2026-06-09
 
+- Guarded mirrored preview construction when the saved capture has no
+  `CGImage` backing and reused the missing-photo fallback.
+- Added static checker coverage for display `CGImage` fallback behavior.
 - Required successful local JPEG writes before navigating to the captured-photo
   display flow.
 - Added static checker coverage for the photo write-success guard.

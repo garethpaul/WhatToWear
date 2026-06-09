@@ -23,6 +23,7 @@ Priority:
 - Prevent repeated snap taps from starting overlapping countdown timers
 - Avoid console logging camera discovery or setup state
 - Show a fallback if the saved local capture cannot be displayed
+- Show the same fallback if the saved image cannot be mirrored for preview
 - Avoid force-unwrapping app-launch mask assets and optional startup state
 - Treat Swift and AVFoundation APIs as legacy until documented
 

@@ -19,6 +19,7 @@ SESSION_INPUT_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-camera-session-i
 FOCUS_TOUCH_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-focus-touch-guards.md"
 COUNTDOWN_TIMER_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-countdown-timer-guard.md"
 CAMERA_LOGGING_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-camera-console-log-guard.md"
+DISPLAY_CGIMAGE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-display-cgimage-guard.md"
 
 EXPECTED_CAMERA_DESCRIPTION = (
     "WhatToWear uses the camera to capture a local outfit photo for preview."
@@ -214,6 +215,22 @@ def test_display_image_loads_capture_safely():
         "display flow must not force-unwrap the saved image",
     )
     assert_true(
+        "UIImage(CGImage: image.CGImage" not in source,
+        "display flow must not assume saved images have CGImage backing",
+    )
+    assert_true(
+        "if let imageRef = image.CGImage" in source,
+        "display flow must guard the saved image CGImage backing before mirroring",
+    )
+    assert_true(
+        "func showMissingPhoto()" in source,
+        "display flow must centralize missing-photo fallback UI",
+    )
+    assert_true(
+        "showMissingPhoto()" in source and source.count("showMissingPhoto()") >= 3,
+        "display flow must use the missing-photo fallback for load and CGImage failures",
+    )
+    assert_true(
         '"No photo available"' in source and "suggestedColors.hidden = true" in source,
         "display flow must show a fallback when the local capture is missing",
     )
@@ -266,6 +283,7 @@ def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(FOCUS_TOUCH_PLAN_PATH, "focus touch guards")
     assert_completed_plan(COUNTDOWN_TIMER_PLAN_PATH, "countdown timer guard")
     assert_completed_plan(CAMERA_LOGGING_PLAN_PATH, "camera console log guard")
+    assert_completed_plan(DISPLAY_CGIMAGE_PLAN_PATH, "display CGImage guard")
 
 
 def main():

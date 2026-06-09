@@ -26,16 +26,24 @@ class DisplayImage: UIViewController {
         let documentsPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as String
         let destinationPath = documentsPath.stringByAppendingPathComponent("what_to_wear.jpg")
         if let image = UIImage(contentsOfFile: destinationPath) {
-            // image needs to be flipped to get the view intended form the selfie
-            let flippedImage = UIImage(CGImage: image.CGImage, scale: 1.0, orientation: .LeftMirrored)
+            if let imageRef = image.CGImage {
+                // image needs to be flipped to get the view intended form the selfie
+                let flippedImage = UIImage(CGImage: imageRef, scale: 1.0, orientation: .LeftMirrored)
 
-            // display image
-            self.imageView.image = flippedImage
+                // display image
+                self.imageView.image = flippedImage
+            } else {
+                showMissingPhoto()
+            }
         } else {
-            self.message.text = "No photo available"
-            self.suggestedColors.hidden = true
+            showMissingPhoto()
         }
 
+    }
+
+    func showMissingPhoto() {
+        self.message.text = "No photo available"
+        self.suggestedColors.hidden = true
     }
 
     // IBOutlets
