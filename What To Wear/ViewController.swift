@@ -103,9 +103,10 @@ class ViewController: UIViewController {
             let documentsPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as String
             let destinationPath = documentsPath.stringByAppendingPathComponent("what_to_wear.jpg")
             if let jpegData = UIImageJPEGRepresentation(image,1.0) {
-                jpegData.writeToFile(destinationPath, atomically: true)
-                dispatch_async(dispatch_get_main_queue()) {
-                    self.performSegueWithIdentifier("displayImage", sender: self);
+                if jpegData.writeToFile(destinationPath, atomically: true) {
+                    dispatch_async(dispatch_get_main_queue()) {
+                        self.performSegueWithIdentifier("displayImage", sender: self);
+                    }
                 }
             }
         }

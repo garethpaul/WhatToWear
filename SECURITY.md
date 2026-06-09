@@ -32,6 +32,9 @@ Helpful reports include:
 - Review found file, document, data, or media parsing flows; changes in those areas should receive security-focused review before merge.
 - Camera discovery and setup errors should stay out of console logging because
   camera availability and capture setup are privacy-sensitive app state.
+- Camera captures should only move to the display flow after a successful local
+  documents-directory write, so failed writes do not imply that a photo was
+  saved.
 - No primary dependency manifest was detected in the repository root. If dependencies are added later, include a manifest and prefer reproducible installation instructions.
 
 ## Mobile Privacy Notes

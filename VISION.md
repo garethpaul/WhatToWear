@@ -15,6 +15,7 @@ Priority:
 
 - Preserve the countdown-to-photo capture flow
 - Keep captured images local to the app documents directory
+- Only display captured photos after a successful local write
 - Make camera permission and storage behavior explicit
 - Guard optional camera connection data before capture
 - Guard camera session inputs and outputs before adding them

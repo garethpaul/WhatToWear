@@ -47,9 +47,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 ## Testing and Verification
 
 - `make verify` runs static camera privacy, local-storage, capture, display
-  image, capture input-port, camera session input/output, and app-launch mask
-  focus touch, countdown timer, and camera console logging checks and attempts
-  an Xcode build when `xcodebuild` is available.
+  image, photo write-success, capture input-port, camera session input/output,
+  and app-launch mask focus touch, countdown timer, and camera console logging
+  checks and attempts an Xcode build when `xcodebuild` is available.
 - `make check` runs `make verify` with bytecode cleanup before and after.
 - `python3 scripts/check_whattowear_contracts.py` runs the static
   WhatToWear contracts without the optional Xcode build.
@@ -80,6 +80,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   camera privacy baseline.
 - See `docs/plans/2026-06-08-camera-capture-guards.md` for the camera capture
   failure and image-conversion guard contract.
+- See `docs/plans/2026-06-09-photo-write-success-guard.md` for only showing
+  the display flow after the local JPEG write succeeds.
 - See `docs/plans/2026-06-08-display-image-load-guard.md` for saved capture
   display fallback behavior.
 - See `docs/plans/2026-06-09-launch-mask-guards.md` for app-launch mask asset

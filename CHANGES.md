@@ -2,6 +2,9 @@
 
 ## 2026-06-09
 
+- Required successful local JPEG writes before navigating to the captured-photo
+  display flow.
+- Added static checker coverage for the photo write-success guard.
 - Guarded countdown start so repeated snap taps cannot schedule overlapping
   capture timers.
 - Added static checker coverage for duplicate countdown timer prevention.

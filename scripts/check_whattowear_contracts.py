@@ -11,6 +11,7 @@ VIEW_CONTROLLER = ROOT / "What To Wear" / "ViewController.swift"
 DISPLAY_IMAGE = ROOT / "What To Wear" / "DisplayImage.swift"
 CAMERA_PRIVACY_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-08-camera-privacy-contract.md"
 CAPTURE_GUARDS_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-08-camera-capture-guards.md"
+PHOTO_WRITE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-photo-write-success-guard.md"
 DISPLAY_IMAGE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-08-display-image-load-guard.md"
 LAUNCH_MASK_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-launch-mask-guards.md"
 INPUT_PORTS_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-camera-input-port-guards.md"
@@ -80,6 +81,22 @@ def test_camera_capture_guards_nil_buffers_and_jpegs():
     assert_true(
         "dispatch_async(dispatch_get_main_queue())" in source,
         "segue must be dispatched back to the main queue",
+    )
+
+
+def test_photo_save_requires_successful_write_before_segue():
+    source = VIEW_CONTROLLER.read_text()
+    method = source.split("func didTakePhoto", 1)[1].split("@IBOutlet var snapBtn", 1)[0]
+
+    assert_true(
+        "if jpegData.writeToFile(destinationPath, atomically: true)" in method,
+        "photo save must check that the local JPEG write succeeded",
+    )
+    assert_true(
+        method.index("if jpegData.writeToFile(destinationPath, atomically: true)")
+        < method.index("dispatch_async(dispatch_get_main_queue())")
+        < method.index('self.performSegueWithIdentifier("displayImage", sender: self)'),
+        "display segue must only run after the successful local write guard",
     )
 
 
@@ -241,6 +258,7 @@ def assert_completed_plan(path, label):
 def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(CAMERA_PRIVACY_PLAN_PATH, "camera privacy")
     assert_completed_plan(CAPTURE_GUARDS_PLAN_PATH, "camera capture guards")
+    assert_completed_plan(PHOTO_WRITE_PLAN_PATH, "photo write success guard")
     assert_completed_plan(DISPLAY_IMAGE_PLAN_PATH, "display image load guard")
     assert_completed_plan(LAUNCH_MASK_PLAN_PATH, "launch mask guards")
     assert_completed_plan(INPUT_PORTS_PLAN_PATH, "camera input port guards")
@@ -255,6 +273,7 @@ def main():
         test_camera_usage_description_is_declared,
         test_captures_remain_local_to_documents_directory,
         test_camera_capture_guards_nil_buffers_and_jpegs,
+        test_photo_save_requires_successful_write_before_segue,
         test_camera_capture_guards_connection_input_ports,
         test_camera_session_guards_input_and_output_setup,
         test_focus_touch_handlers_guard_optional_touches,
