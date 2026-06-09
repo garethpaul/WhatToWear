@@ -16,6 +16,7 @@
 - Guarded app launch window, mask layer, and launch mask image setup instead of
   force-unwrapping optional startup state.
 - Added static checker coverage for launch mask optional guards.
+- Removed camera setup console logging and added static checker coverage.
 
 ## 2026-06-08
 

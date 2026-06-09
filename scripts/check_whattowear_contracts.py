@@ -17,6 +17,7 @@ INPUT_PORTS_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-camera-input-port-
 SESSION_INPUT_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-camera-session-input-guards.md"
 FOCUS_TOUCH_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-focus-touch-guards.md"
 COUNTDOWN_TIMER_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-countdown-timer-guard.md"
+CAMERA_LOGGING_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-camera-console-log-guard.md"
 
 EXPECTED_CAMERA_DESCRIPTION = (
     "WhatToWear uses the camera to capture a local outfit photo for preview."
@@ -166,6 +167,19 @@ def test_countdown_ignores_duplicate_timers():
     )
 
 
+def test_camera_flow_avoids_console_logging():
+    source = VIEW_CONTROLLER.read_text()
+
+    assert_true(
+        "println(" not in source,
+        "camera flow must not write camera discovery or setup state to stdout",
+    )
+    assert_true(
+        "localizedDescription" not in source,
+        "camera setup errors must not be formatted for console logging",
+    )
+
+
 def test_display_image_loads_capture_safely():
     source = DISPLAY_IMAGE.read_text()
     source_without_spaces = source.replace(" ", "")
@@ -233,6 +247,7 @@ def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(SESSION_INPUT_PLAN_PATH, "camera session input guards")
     assert_completed_plan(FOCUS_TOUCH_PLAN_PATH, "focus touch guards")
     assert_completed_plan(COUNTDOWN_TIMER_PLAN_PATH, "countdown timer guard")
+    assert_completed_plan(CAMERA_LOGGING_PLAN_PATH, "camera console log guard")
 
 
 def main():
@@ -244,6 +259,7 @@ def main():
         test_camera_session_guards_input_and_output_setup,
         test_focus_touch_handlers_guard_optional_touches,
         test_countdown_ignores_duplicate_timers,
+        test_camera_flow_avoids_console_logging,
         test_display_image_loads_capture_safely,
         test_launch_mask_guards_optional_window_and_assets,
         test_completed_plans_are_in_docs_plans,

@@ -137,7 +137,6 @@ class ViewController: UIViewController {
                 if(device.position == AVCaptureDevicePosition.Front) {
                     captureDevice = device as? AVCaptureDevice
                     if captureDevice != nil {
-                        println("Capture device found")
                         beginSession()
                     }
                 }
@@ -199,9 +198,7 @@ class ViewController: UIViewController {
             var err : NSError? = nil
             let input = AVCaptureDeviceInput(device: cameraDevice, error: &err)
 
-            if err != nil {
-                println("error: \(err?.localizedDescription)")
-            } else if input != nil && captureSession.canAddInput(input) {
+            if err == nil && input != nil && captureSession.canAddInput(input) {
                 captureSession.addInput(input)
             }
         }

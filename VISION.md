@@ -20,6 +20,7 @@ Priority:
 - Guard camera session inputs and outputs before adding them
 - Guard optional focus touch data before moving camera focus
 - Prevent repeated snap taps from starting overlapping countdown timers
+- Avoid console logging camera discovery or setup state
 - Show a fallback if the saved local capture cannot be displayed
 - Avoid force-unwrapping app-launch mask assets and optional startup state
 - Treat Swift and AVFoundation APIs as legacy until documented
@@ -45,7 +46,8 @@ Canonical security policy and reporting:
 - [`SECURITY.md`](SECURITY.md)
 
 Photos can be highly sensitive. The app should keep captures local by default,
-avoid hidden uploads, and make deletion or retention behavior clear.
+avoid hidden uploads, avoid console logging camera setup state, and make
+deletion or retention behavior clear.
 
 ## What We Will Not Merge (For Now)
 
