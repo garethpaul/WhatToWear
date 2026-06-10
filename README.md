@@ -54,6 +54,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make check` runs `make verify` with bytecode cleanup before and after.
 - `python3 scripts/check_whattowear_contracts.py` runs the static
   WhatToWear contracts without the optional Xcode build.
+- GitHub Actions runs the portable `make check` gate on Python 3.10 and 3.12
+  with read-only permissions. Linux jobs intentionally skip Xcode compilation.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.
 - Xcode's test action or `xcodebuild test` can be used with the appropriate scheme and destination on a macOS/Xcode workstation.
@@ -99,6 +101,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   timer prevention.
 - See `docs/plans/2026-06-09-camera-console-log-guard.md` for camera setup
   console logging prevention.
+- See `docs/plans/2026-06-10-hosted-static-verification.md` for the pinned,
+  least-privilege hosted contract baseline.
 
 ## Contributing
 
