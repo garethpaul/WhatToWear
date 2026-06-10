@@ -29,6 +29,8 @@ Priority:
 - Avoid force-unwrapping app-launch mask assets and optional startup state
 - Treat Swift and AVFoundation APIs as legacy until documented
 - Keep portable privacy and camera-safety contracts running in hosted CI
+- Stop countdowns and camera capture whenever the app is inactive or the
+  camera screen is covered
 
 Next priorities:
 

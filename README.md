@@ -61,6 +61,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   Xcode compilation until the Swift 2-era project is migrated.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.
+- Camera lifecycle contracts require pending countdowns and active capture
+  sessions to stop when the app becomes inactive or the camera view is covered.
 - Xcode's test action or `xcodebuild test` can be used with the appropriate scheme and destination on a macOS/Xcode workstation.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -110,6 +112,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   least-privilege hosted contract baseline.
 - See `docs/plans/2026-06-10-protected-photo-lifecycle.md` for complete file
   protection, ephemeral preview handoff, and root-independent verification.
+- See `docs/plans/2026-06-10-camera-session-lifecycle.md` for interruption,
+  countdown cancellation, and camera visibility controls.
 
 ## Contributing
 

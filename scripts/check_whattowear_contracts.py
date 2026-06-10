@@ -22,6 +22,7 @@ CAMERA_LOGGING_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-camera-console-
 DISPLAY_CGIMAGE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-display-cgimage-guard.md"
 HOSTED_VERIFICATION_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-10-hosted-static-verification.md"
 PHOTO_LIFECYCLE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-10-protected-photo-lifecycle.md"
+CAMERA_SESSION_LIFECYCLE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-10-camera-session-lifecycle.md"
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "check.yml"
 MAKEFILE_PATH = ROOT / "Makefile"
 
@@ -232,6 +233,61 @@ def test_countdown_ignores_duplicate_timers():
     )
 
 
+def test_camera_session_stops_when_inactive_or_covered():
+    view_source = VIEW_CONTROLLER.read_text()
+    app_source = APP_DELEGATE.read_text()
+
+    assert_true(
+        "var captureViewVisible = false" in view_source,
+        "camera lifecycle must track whether the capture screen is visible",
+    )
+    assert_true(
+        "override func viewWillAppear(animated: Bool)" in view_source
+        and "captureViewVisible = true\n        resumeCaptureSession()" in view_source,
+        "the visible camera screen must resume its capture session",
+    )
+    assert_true(
+        "override func viewWillDisappear(animated: Bool)" in view_source
+        and "captureViewVisible = false\n        pauseCaptureSession()" in view_source,
+        "a covered camera screen must stop its capture session",
+    )
+    pause_method = view_source.split("func pauseCaptureSession()", 1)[1].split(
+        "func resumeCaptureSession()", 1
+    )[0]
+    assert_true(
+        "timer.invalidate()" in pause_method and "countdown.hidden = true" in pause_method,
+        "pausing the camera must cancel and hide an in-progress countdown",
+    )
+    assert_true(
+        "if captureSession.running" in pause_method
+        and "captureSession.stopRunning()" in pause_method,
+        "pausing the camera must stop an active capture session",
+    )
+    resume_method = view_source.split("func resumeCaptureSession()", 1)[1].split(
+        "override func viewDidLoad()", 1
+    )[0]
+    assert_true(
+        "if captureViewVisible && captureDevice != nil && !captureSession.running" in resume_method,
+        "camera restart must require a visible view, configured device, and stopped session",
+    )
+    assert_true(
+        "captureSession.startRunning()" in resume_method,
+        "camera lifecycle must restart an eligible capture session",
+    )
+    assert_true(
+        view_source.count("captureSession.startRunning()") == 1,
+        "all capture-session starts must use the visibility-aware resume path",
+    )
+    assert_true(
+        app_source.count("cameraController.pauseCaptureSession()") == 1,
+        "app inactivity must pause the camera session exactly once",
+    )
+    assert_true(
+        app_source.count("cameraController.resumeCaptureSession()") == 1,
+        "app activation must resume the visible camera session exactly once",
+    )
+
+
 def test_camera_flow_avoids_console_logging():
     source = VIEW_CONTROLLER.read_text()
 
@@ -399,6 +455,7 @@ def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(DISPLAY_CGIMAGE_PLAN_PATH, "display CGImage guard")
     assert_completed_plan(HOSTED_VERIFICATION_PLAN_PATH, "hosted static verification")
     assert_completed_plan(PHOTO_LIFECYCLE_PLAN_PATH, "protected photo lifecycle")
+    assert_completed_plan(CAMERA_SESSION_LIFECYCLE_PLAN_PATH, "camera session lifecycle")
 
 
 def main():
@@ -412,6 +469,7 @@ def main():
         test_camera_session_guards_input_and_output_setup,
         test_focus_touch_handlers_guard_optional_touches,
         test_countdown_ignores_duplicate_timers,
+        test_camera_session_stops_when_inactive_or_covered,
         test_camera_flow_avoids_console_logging,
         test_display_image_loads_capture_safely,
         test_launch_mask_guards_optional_window_and_assets,

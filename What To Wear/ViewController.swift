@@ -10,6 +10,7 @@ class ViewController: UIViewController {
     var startTime = NSTimeInterval()
     var timer = NSTimer()
     var snapTime:Double = 5
+    var captureViewVisible = false
 
 
     @IBOutlet var countdown: UILabel!
@@ -124,6 +125,32 @@ class ViewController: UIViewController {
     // If we find a device we'll store it here for later use
     var captureDevice : AVCaptureDevice?
 
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        captureViewVisible = true
+        resumeCaptureSession()
+    }
+
+    override func viewWillDisappear(animated: Bool) {
+        super.viewWillDisappear(animated)
+        captureViewVisible = false
+        pauseCaptureSession()
+    }
+
+    func pauseCaptureSession() {
+        timer.invalidate()
+        countdown.hidden = true
+        if captureSession.running {
+            captureSession.stopRunning()
+        }
+    }
+
+    func resumeCaptureSession() {
+        if captureViewVisible && captureDevice != nil && !captureSession.running {
+            captureSession.startRunning()
+        }
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -221,9 +248,9 @@ class ViewController: UIViewController {
         self.snapBtn.opaque = true
         self.snapBtn.alpha = 0.4
 
-        // Start the magic
+        // Start only after the camera view is visible.
         previewLayer?.frame = self.view.layer.frame
-        captureSession.startRunning()
+        resumeCaptureSession()
     }
     
 }

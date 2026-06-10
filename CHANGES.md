@@ -2,6 +2,9 @@
 
 ## 2026-06-10
 
+- Stopped active camera sessions and cancelled pending countdowns when the app
+  becomes inactive or the capture view is covered, with visibility-aware
+  restart guards and portable regression coverage.
 - Added immutable, read-only GitHub Actions verification on Python 3.10, 3.12,
   and 3.14 for the portable privacy and camera-safety contracts, with manual
   dispatch for maintenance runs.
