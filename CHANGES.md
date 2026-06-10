@@ -1,5 +1,13 @@
 # Changes
 
+## 2026-06-10
+
+- Added immutable, read-only GitHub Actions verification on Python 3.10 and
+  3.12 for the portable privacy and camera-safety contracts.
+- Added static coverage for workflow permissions, action pins, matrix versions,
+  timeout, and the `make check` command.
+- Documented that hosted Linux checks intentionally skip legacy Xcode builds.
+
 ## 2026-06-09
 
 - Guarded mirrored preview construction when the saved capture has no
