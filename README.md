@@ -49,14 +49,16 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make verify` runs static camera privacy, local-storage, capture, display
   image, display CGImage, photo write-success, capture input-port, camera
   session input/output, and app-launch mask focus touch, countdown timer, and
-  camera console logging checks and attempts an Xcode build when `xcodebuild`
-  is available.
+  camera console logging checks. It also verifies complete file protection and
+  post-preview deletion for the local JPEG handoff, then attempts an Xcode
+  build when `xcodebuild` is available.
 - `make check` runs `make verify` with bytecode cleanup before and after.
 - `python3 scripts/check_whattowear_contracts.py` runs the static
   WhatToWear contracts without the optional Xcode build.
 - GitHub Actions runs the portable `make check` gate on Python 3.10, 3.12, and
-  3.14 with read-only permissions and manual dispatch. Linux jobs intentionally
-  skip Xcode compilation until the Swift 2-era project is migrated.
+  3.14 using fixed Ubuntu 24.04 runners, read-only permissions, per-branch
+  concurrency cancellation, and manual dispatch. Linux jobs intentionally skip
+  Xcode compilation until the Swift 2-era project is migrated.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.
 - Xcode's test action or `xcodebuild test` can be used with the appropriate scheme and destination on a macOS/Xcode workstation.
@@ -67,6 +69,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 
 - No required secret or credential file was identified in the repository scan. If you add integrations later, keep secrets out of git.
 - Camera access uses `NSCameraUsageDescription` to explain that the app captures a local outfit photo for preview.
+- The captured JPEG must receive complete iOS file protection before preview
+  and is removed from disk after the display controller decodes it.
 
 ## Security and Privacy Notes
 
@@ -104,6 +108,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   console logging prevention.
 - See `docs/plans/2026-06-10-hosted-static-verification.md` for the pinned,
   least-privilege hosted contract baseline.
+- See `docs/plans/2026-06-10-protected-photo-lifecycle.md` for complete file
+  protection, ephemeral preview handoff, and root-independent verification.
 
 ## Contributing
 

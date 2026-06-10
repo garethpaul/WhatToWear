@@ -15,6 +15,8 @@ Priority:
 
 - Preserve the countdown-to-photo capture flow
 - Keep captured images local to the app documents directory
+- Require complete file protection for the temporary JPEG handoff
+- Remove the JPEG after the display controller decodes it
 - Only display captured photos after a successful local write
 - Make camera permission and storage behavior explicit
 - Guard optional camera connection data before capture

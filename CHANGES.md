@@ -8,6 +8,12 @@
 - Added static coverage for workflow permissions, action pins, matrix versions,
   timeout, and the `make check` command.
 - Documented that hosted Linux checks intentionally skip legacy Xcode builds.
+- Required complete iOS file protection before displaying a captured JPEG,
+  removed the file on protection failure, and deleted the handoff after preview
+  decoding.
+- Pinned hosted verification to Ubuntu 24.04 with superseded-run cancellation
+  and made Make targets independent of the caller's working directory. The
+  Xcode scheme is now passed without literal path-escape backslashes.
 
 ## 2026-06-09
 

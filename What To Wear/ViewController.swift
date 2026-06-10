@@ -104,8 +104,13 @@ class ViewController: UIViewController {
             let destinationPath = documentsPath.stringByAppendingPathComponent("what_to_wear.jpg")
             if let jpegData = UIImageJPEGRepresentation(image,1.0) {
                 if jpegData.writeToFile(destinationPath, atomically: true) {
-                    dispatch_async(dispatch_get_main_queue()) {
-                        self.performSegueWithIdentifier("displayImage", sender: self);
+                    let protectionAttributes = [NSFileProtectionKey: NSFileProtectionComplete]
+                    if NSFileManager.defaultManager().setAttributes(protectionAttributes, ofItemAtPath: destinationPath, error: nil) {
+                        dispatch_async(dispatch_get_main_queue()) {
+                            self.performSegueWithIdentifier("displayImage", sender: self);
+                        }
+                    } else {
+                        NSFileManager.defaultManager().removeItemAtPath(destinationPath, error: nil)
                     }
                 }
             }

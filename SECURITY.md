@@ -35,6 +35,9 @@ Helpful reports include:
 - Camera captures should only move to the display flow after a successful local
   documents-directory write, so failed writes do not imply that a photo was
   saved.
+- The local JPEG handoff should receive complete iOS file protection before
+  preview and be removed after the display controller decodes it. A protection
+  failure should remove the file instead of navigating to the preview.
 - No primary dependency manifest was detected in the repository root. If dependencies are added later, include a manifest and prefer reproducible installation instructions.
 
 ## Mobile Privacy Notes

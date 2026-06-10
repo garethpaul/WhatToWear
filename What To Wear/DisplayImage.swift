@@ -38,6 +38,7 @@ class DisplayImage: UIViewController {
         } else {
             showMissingPhoto()
         }
+        NSFileManager.defaultManager().removeItemAtPath(destinationPath, error: nil)
 
     }
 

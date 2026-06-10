@@ -21,7 +21,9 @@ COUNTDOWN_TIMER_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-countdown-time
 CAMERA_LOGGING_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-camera-console-log-guard.md"
 DISPLAY_CGIMAGE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-display-cgimage-guard.md"
 HOSTED_VERIFICATION_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-10-hosted-static-verification.md"
+PHOTO_LIFECYCLE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-10-protected-photo-lifecycle.md"
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "check.yml"
+MAKEFILE_PATH = ROOT / "Makefile"
 
 EXPECTED_CAMERA_DESCRIPTION = (
     "WhatToWear uses the camera to capture a local outfit photo for preview."
@@ -100,6 +102,49 @@ def test_photo_save_requires_successful_write_before_segue():
         < method.index("dispatch_async(dispatch_get_main_queue())")
         < method.index('self.performSegueWithIdentifier("displayImage", sender: self)'),
         "display segue must only run after the successful local write guard",
+    )
+
+
+def test_photo_handoff_is_protected_and_ephemeral():
+    capture_source = VIEW_CONTROLLER.read_text()
+    save_method = capture_source.split("func didTakePhoto", 1)[1].split(
+        "@IBOutlet var snapBtn", 1
+    )[0]
+    display_source = DISPLAY_IMAGE.read_text()
+
+    protection_call = (
+        "setAttributes(protectionAttributes, ofItemAtPath: destinationPath, error: nil)"
+    )
+    assert_true(
+        "[NSFileProtectionKey: NSFileProtectionComplete]" in save_method,
+        "saved photos must use complete iOS file protection",
+    )
+    assert_true(
+        protection_call in save_method,
+        "photo saving must verify file protection before display",
+    )
+    assert_true(
+        save_method.index("writeToFile(destinationPath, atomically: true)")
+        < save_method.index(protection_call)
+        < save_method.index('performSegueWithIdentifier("displayImage", sender: self)'),
+        "photo display must follow a successful protected write",
+    )
+    assert_true(
+        "else {\n                        NSFileManager.defaultManager().removeItemAtPath(destinationPath, error: nil)"
+        in save_method,
+        "a photo must be removed if file protection cannot be applied",
+    )
+    assert_true(
+        "NSFileManager.defaultManager().removeItemAtPath(destinationPath, error: nil)"
+        in display_source,
+        "display flow must remove the local handoff file after decoding it",
+    )
+    assert_true(
+        display_source.index("UIImage(contentsOfFile: destinationPath)")
+        < display_source.index(
+            "NSFileManager.defaultManager().removeItemAtPath(destinationPath, error: nil)"
+        ),
+        "display flow must decode the photo before removing its handoff file",
     )
 
 
@@ -293,6 +338,44 @@ def test_hosted_verification_is_least_privilege_and_pinned():
     )
     assert_true("run: make check" in workflow, "hosted verification must run make check")
     assert_true("timeout-minutes: 5" in workflow, "hosted verification must have a timeout")
+    assert_true("concurrency:" in workflow, "hosted verification must define concurrency")
+    assert_true(
+        "cancel-in-progress: true" in workflow,
+        "hosted verification must cancel superseded runs",
+    )
+    assert_true(
+        "runs-on: ubuntu-24.04" in workflow,
+        "hosted verification must use a fixed Ubuntu runner",
+    )
+    assert_true(
+        "ubuntu-latest" not in workflow,
+        "hosted verification must not use a floating Ubuntu runner",
+    )
+
+
+def test_makefile_is_root_independent():
+    makefile = MAKEFILE_PATH.read_text()
+
+    assert_true(
+        "ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))" in makefile,
+        "Makefile must resolve the repository root",
+    )
+    assert_true(
+        "CONTRACT_SCRIPT := $(ROOT)/scripts/check_whattowear_contracts.py" in makefile,
+        "Makefile must use the rooted contract script path",
+    )
+    assert_true(
+        "SCHEME := What To Wear" in makefile and "SCHEME := What\\ To\\ Wear" not in makefile,
+        "Makefile must pass the Xcode scheme without literal backslashes",
+    )
+    assert_true(
+        makefile.count('"$(CONTRACT_SCRIPT)"') >= 2,
+        "Makefile must quote the rooted contract script path",
+    )
+    assert_true(
+        '$(MAKE) -f "$(ROOT)/Makefile" clean' in makefile,
+        "recursive cleanup must use the rooted Makefile",
+    )
 
 
 def assert_completed_plan(path, label):
@@ -315,6 +398,7 @@ def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(CAMERA_LOGGING_PLAN_PATH, "camera console log guard")
     assert_completed_plan(DISPLAY_CGIMAGE_PLAN_PATH, "display CGImage guard")
     assert_completed_plan(HOSTED_VERIFICATION_PLAN_PATH, "hosted static verification")
+    assert_completed_plan(PHOTO_LIFECYCLE_PLAN_PATH, "protected photo lifecycle")
 
 
 def main():
@@ -323,6 +407,7 @@ def main():
         test_captures_remain_local_to_documents_directory,
         test_camera_capture_guards_nil_buffers_and_jpegs,
         test_photo_save_requires_successful_write_before_segue,
+        test_photo_handoff_is_protected_and_ephemeral,
         test_camera_capture_guards_connection_input_ports,
         test_camera_session_guards_input_and_output_setup,
         test_focus_touch_handlers_guard_optional_touches,
@@ -331,6 +416,7 @@ def main():
         test_display_image_loads_capture_safely,
         test_launch_mask_guards_optional_window_and_assets,
         test_hosted_verification_is_least_privilege_and_pinned,
+        test_makefile_is_root_independent,
         test_completed_plans_are_in_docs_plans,
     ]
     for test in tests:
