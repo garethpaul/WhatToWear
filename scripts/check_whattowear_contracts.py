@@ -276,8 +276,12 @@ def test_hosted_verification_is_least_privilege_and_pinned():
         "hosted verification permissions must be read-only",
     )
     assert_true(
-        "python-version: ['3.10', '3.12']" in workflow,
-        "hosted verification must cover Python 3.10 and 3.12",
+        "python-version: ['3.10', '3.12', '3.14']" in workflow,
+        "hosted verification must cover Python 3.10, 3.12, and 3.14",
+    )
+    assert_true(
+        "workflow_dispatch:" in workflow,
+        "hosted verification must support manual dispatch",
     )
     assert_true(
         "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" in workflow,

@@ -54,8 +54,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make check` runs `make verify` with bytecode cleanup before and after.
 - `python3 scripts/check_whattowear_contracts.py` runs the static
   WhatToWear contracts without the optional Xcode build.
-- GitHub Actions runs the portable `make check` gate on Python 3.10 and 3.12
-  with read-only permissions. Linux jobs intentionally skip Xcode compilation.
+- GitHub Actions runs the portable `make check` gate on Python 3.10, 3.12, and
+  3.14 with read-only permissions and manual dispatch. Linux jobs intentionally
+  skip Xcode compilation until the Swift 2-era project is migrated.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.
 - Xcode's test action or `xcodebuild test` can be used with the appropriate scheme and destination on a macOS/Xcode workstation.
