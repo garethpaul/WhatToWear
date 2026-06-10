@@ -20,6 +20,8 @@ FOCUS_TOUCH_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-focus-touch-guards
 COUNTDOWN_TIMER_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-countdown-timer-guard.md"
 CAMERA_LOGGING_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-camera-console-log-guard.md"
 DISPLAY_CGIMAGE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-display-cgimage-guard.md"
+HOSTED_VERIFICATION_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-10-hosted-static-verification.md"
+WORKFLOW_PATH = ROOT / ".github" / "workflows" / "check.yml"
 
 EXPECTED_CAMERA_DESCRIPTION = (
     "WhatToWear uses the camera to capture a local outfit photo for preview."
@@ -265,6 +267,30 @@ def test_launch_mask_guards_optional_window_and_assets():
     )
 
 
+def test_hosted_verification_is_least_privilege_and_pinned():
+    assert_true(WORKFLOW_PATH.is_file(), "hosted verification workflow must exist")
+    workflow = WORKFLOW_PATH.read_text()
+
+    assert_true(
+        "permissions:\n  contents: read" in workflow,
+        "hosted verification permissions must be read-only",
+    )
+    assert_true(
+        "python-version: ['3.10', '3.12']" in workflow,
+        "hosted verification must cover Python 3.10 and 3.12",
+    )
+    assert_true(
+        "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" in workflow,
+        "checkout must use an immutable revision",
+    )
+    assert_true(
+        "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405" in workflow,
+        "setup-python must use an immutable revision",
+    )
+    assert_true("run: make check" in workflow, "hosted verification must run make check")
+    assert_true("timeout-minutes: 5" in workflow, "hosted verification must have a timeout")
+
+
 def assert_completed_plan(path, label):
     assert_true(path.is_file(), "{0} plan must live under docs/plans".format(label))
     plan_text = path.read_text()
@@ -284,6 +310,7 @@ def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(COUNTDOWN_TIMER_PLAN_PATH, "countdown timer guard")
     assert_completed_plan(CAMERA_LOGGING_PLAN_PATH, "camera console log guard")
     assert_completed_plan(DISPLAY_CGIMAGE_PLAN_PATH, "display CGImage guard")
+    assert_completed_plan(HOSTED_VERIFICATION_PLAN_PATH, "hosted static verification")
 
 
 def main():
@@ -299,6 +326,7 @@ def main():
         test_camera_flow_avoids_console_logging,
         test_display_image_loads_capture_safely,
         test_launch_mask_guards_optional_window_and_assets,
+        test_hosted_verification_is_least_privilege_and_pinned,
         test_completed_plans_are_in_docs_plans,
     ]
     for test in tests:

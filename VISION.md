@@ -26,6 +26,7 @@ Priority:
 - Show the same fallback if the saved image cannot be mirrored for preview
 - Avoid force-unwrapping app-launch mask assets and optional startup state
 - Treat Swift and AVFoundation APIs as legacy until documented
+- Keep portable privacy and camera-safety contracts running in hosted CI
 
 Next priorities:
 
