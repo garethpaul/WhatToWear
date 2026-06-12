@@ -63,7 +63,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - GitHub Actions runs the portable `make check` gate on Python 3.10, 3.12, and
   3.14 using fixed Ubuntu 24.04 runners, read-only permissions, per-branch
   concurrency cancellation, and manual dispatch. Linux jobs intentionally skip
-  Xcode compilation until the Swift 2-era project is migrated.
+  Xcode compilation until the Swift 2-era project is migrated. Checkout
+  credentials are not persisted after source retrieval.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.
 - Camera lifecycle contracts require pending countdowns and active capture

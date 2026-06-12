@@ -23,6 +23,7 @@ DISPLAY_CGIMAGE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-display-cgimag
 HOSTED_VERIFICATION_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-10-hosted-static-verification.md"
 PHOTO_LIFECYCLE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-10-protected-photo-lifecycle.md"
 CAMERA_SESSION_LIFECYCLE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-10-camera-session-lifecycle.md"
+CHECKOUT_CREDENTIAL_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-12-checkout-credential-boundary.md"
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "check.yml"
 MAKEFILE_PATH = ROOT / "Makefile"
 
@@ -371,6 +372,31 @@ def test_launch_mask_guards_optional_window_and_assets():
 def test_hosted_verification_is_least_privilege_and_pinned():
     assert_true(WORKFLOW_PATH.is_file(), "hosted verification workflow must exist")
     workflow = WORKFLOW_PATH.read_text()
+    workflow_files = sorted(
+        path.relative_to(ROOT).as_posix()
+        for path in WORKFLOW_PATH.parent.iterdir()
+        if path.is_file()
+    )
+    checkout_step = (
+        "      - name: Check out repository\n"
+        "        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3\n"
+        "        with:\n"
+        "          persist-credentials: false"
+    )
+
+    assert_true(
+        workflow_files == [".github/workflows/check.yml"],
+        "workflow inventory must contain only .github/workflows/check.yml",
+    )
+    assert_true(
+        workflow.count("actions/checkout@") == 1 and checkout_step in workflow,
+        "hosted verification must use one pinned credential-free checkout",
+    )
+    assert_true(
+        workflow.count("persist-credentials:") == 1
+        and "persist-credentials: true" not in workflow,
+        "hosted verification must not persist checkout credentials",
+    )
 
     assert_true(
         "permissions:\n  contents: read" in workflow,
@@ -406,6 +432,24 @@ def test_hosted_verification_is_least_privilege_and_pinned():
     assert_true(
         "ubuntu-latest" not in workflow,
         "hosted verification must not use a floating Ubuntu runner",
+    )
+    checkout_plan = CHECKOUT_CREDENTIAL_PLAN_PATH.read_text()
+    assert_true(
+        "status: completed" in checkout_plan.lower()
+        and "persist-credentials: false" in checkout_plan
+        and "hostile mutations rejected" in checkout_plan,
+        "checkout credential plan must record completed verification",
+    )
+    guidance = " ".join(
+        "\n".join(
+            (ROOT / path).read_text()
+            for path in ["README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]
+        ).split()
+    ).lower()
+    assert_true(
+        "checkout credentials are not persisted" in guidance
+        and "credential-free checkout" in guidance,
+        "repository guidance must document the credential-free checkout boundary",
     )
 
 
@@ -456,6 +500,7 @@ def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(HOSTED_VERIFICATION_PLAN_PATH, "hosted static verification")
     assert_completed_plan(PHOTO_LIFECYCLE_PLAN_PATH, "protected photo lifecycle")
     assert_completed_plan(CAMERA_SESSION_LIFECYCLE_PLAN_PATH, "camera session lifecycle")
+    assert_completed_plan(CHECKOUT_CREDENTIAL_PLAN_PATH, "checkout credential boundary")
 
 
 def main():
