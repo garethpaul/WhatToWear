@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Invalidated queued camera captures across pause-and-resume cycles with a
+  lifecycle generation guard at both asynchronous capture boundaries.
 - Rechecked camera visibility and session state before queued connection scans
   and again before asynchronous JPEG conversion and local persistence.
 - Added a portable ordering contract for both stale capture lifecycle guards.

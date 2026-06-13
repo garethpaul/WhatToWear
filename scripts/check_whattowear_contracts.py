@@ -25,6 +25,7 @@ PHOTO_LIFECYCLE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-10-protected-phot
 CAMERA_SESSION_LIFECYCLE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-10-camera-session-lifecycle.md"
 CHECKOUT_CREDENTIAL_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-12-checkout-credential-boundary.md"
 STALE_CAPTURE_CALLBACK_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-13-stale-camera-capture-callback.md"
+CAPTURE_GENERATION_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-13-camera-capture-generation-guard.md"
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "check.yml"
 MAKEFILE_PATH = ROOT / "Makefile"
 
@@ -170,7 +171,7 @@ def test_camera_capture_guards_connection_input_ports():
 
 def test_stale_capture_work_is_rejected_when_camera_is_inactive():
     source = VIEW_CONTROLLER.read_text()
-    lifecycle_guard = "if !self.captureViewVisible || !self.captureSession.running"
+    lifecycle_guard = "!self.captureViewVisible || !self.captureSession.running"
     capture_flow = source.split(
         "dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0))",
         1,
@@ -190,6 +191,56 @@ def test_stale_capture_work_is_rejected_when_camera_is_inactive():
     assert_true(
         first_guard < connection_scan < completion < second_guard < jpeg_conversion,
         "camera lifecycle guards must run before connection scanning and JPEG conversion",
+    )
+
+
+def test_stale_capture_work_is_rejected_after_camera_resumes():
+    source = VIEW_CONTROLLER.read_text()
+    generation_guard = "queuedCaptureGeneration != self.captureGeneration"
+    capture_flow = source.split("if let stillOutput = self.stillImageOutput", 1)[1].split(
+        "func didTakePhoto", 1
+    )[0]
+    pause_method = source.split("func pauseCaptureSession()", 1)[1].split(
+        "func resumeCaptureSession()", 1
+    )[0]
+
+    assert_true(
+        "var captureGeneration = 0" in source,
+        "camera lifecycle must retain a capture generation",
+    )
+    queued_generation = capture_flow.index(
+        "let queuedCaptureGeneration = self.captureGeneration"
+    )
+    background_dispatch = capture_flow.index(
+        "dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0))"
+    )
+    assert_true(
+        queued_generation < background_dispatch,
+        "capture work must retain its generation before background dispatch",
+    )
+    assert_true(
+        capture_flow.count(generation_guard) == 2,
+        "queued capture work and its completion must both reject an obsolete generation",
+    )
+    first_guard = capture_flow.index(generation_guard)
+    connection_scan = capture_flow.index("for connection in stillOutput.connections")
+    completion = capture_flow.index("captureStillImageAsynchronouslyFromConnection")
+    second_guard = capture_flow.index(generation_guard, first_guard + 1)
+    jpeg_conversion = capture_flow.index(
+        "AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation(imageSampleBuffer)"
+    )
+    assert_true(
+        first_guard < connection_scan < completion < second_guard < jpeg_conversion,
+        "generation guards must run before connection scanning and JPEG conversion",
+    )
+    assert_true(
+        "captureGeneration += 1" in pause_method,
+        "pausing the camera must invalidate capture work from the prior generation",
+    )
+    assert_true(
+        pause_method.index("captureGeneration += 1")
+        < pause_method.index("captureSession.stopRunning()"),
+        "capture generation must advance before an active session is stopped",
     )
 
 
@@ -528,6 +579,7 @@ def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(CAMERA_SESSION_LIFECYCLE_PLAN_PATH, "camera session lifecycle")
     assert_completed_plan(CHECKOUT_CREDENTIAL_PLAN_PATH, "checkout credential boundary")
     assert_completed_plan(STALE_CAPTURE_CALLBACK_PLAN_PATH, "stale camera capture callback")
+    assert_completed_plan(CAPTURE_GENERATION_PLAN_PATH, "camera capture generation guard")
 
 
 def main():
@@ -539,6 +591,7 @@ def main():
         test_photo_handoff_is_protected_and_ephemeral,
         test_camera_capture_guards_connection_input_ports,
         test_stale_capture_work_is_rejected_when_camera_is_inactive,
+        test_stale_capture_work_is_rejected_after_camera_resumes,
         test_camera_session_guards_input_and_output_setup,
         test_focus_touch_handlers_guard_optional_touches,
         test_countdown_ignores_duplicate_timers,

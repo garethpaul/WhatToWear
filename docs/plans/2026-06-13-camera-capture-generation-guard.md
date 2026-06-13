@@ -1,6 +1,6 @@
 # Camera Capture Generation Guard
 
-Status: Planned
+Status: Completed
 
 ## Problem
 
@@ -35,3 +35,16 @@ can pass those checks and persist an obsolete photo.
 - Do not modernize Swift syntax, replace deprecated AVFoundation APIs, alter
   signing/project settings, or redesign the capture flow.
 - Do not merge or close any pull request without explicit owner authorization.
+
+## Verification Results
+
+- The focused inactive-camera and post-resume generation contracts passed.
+- Before this status update, the complete portable checker reached only the
+  required plan-completion assertion after all implementation contracts passed.
+- Seven isolated hostile mutations were rejected: missing generation state,
+  either missing asynchronous generation guard, generation captured after
+  dispatch, missing or late pause invalidation, and stale plan status.
+- Python compilation passed, and both local and external-working-directory
+  `timeout 180s make check` passed all 18 portable contracts.
+- Both full gates explicitly skipped `xcodebuild` because it is unavailable on
+  this Linux host; no simulator or physical-device behavior is claimed.

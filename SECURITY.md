@@ -36,8 +36,8 @@ Helpful reports include:
   documents-directory write, so failed writes do not imply that a photo was
   saved.
 - Queued capture work and asynchronous completions should recheck camera view
-  visibility and session state before scanning connections or converting and
-  persisting a JPEG.
+  visibility, session state, and lifecycle generation before scanning
+  connections or converting and persisting a JPEG.
 - The local JPEG handoff should receive complete iOS file protection before
   preview and be removed after the display controller decodes it. A protection
   failure should remove the file instead of navigating to the preview.

@@ -33,6 +33,7 @@ Priority:
 - Stop countdowns and camera capture whenever the app is inactive or the
   camera screen is covered
 - Reject queued capture work and completions after camera lifecycle changes
+- Keep pre-pause camera callbacks invalid after a later resume
 
 Next priorities:
 

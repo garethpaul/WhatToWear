@@ -11,6 +11,7 @@ class ViewController: UIViewController {
     var timer = NSTimer()
     var snapTime:Double = 5
     var captureViewVisible = false
+    var captureGeneration = 0
 
 
     @IBOutlet var countdown: UILabel!
@@ -51,10 +52,11 @@ class ViewController: UIViewController {
             // wow we are ready to save some photos
             // setup still OutPut to save
             if let stillOutput = self.stillImageOutput {
+                let queuedCaptureGeneration = self.captureGeneration
 
                 // we do this on another thread so we don't hang the UI
                 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
-                    if !self.captureViewVisible || !self.captureSession.running {
+                    if queuedCaptureGeneration != self.captureGeneration || !self.captureViewVisible || !self.captureSession.running {
                         return
                     }
 
@@ -84,7 +86,7 @@ class ViewController: UIViewController {
                             if error != nil || imageSampleBuffer == nil {
                                 return
                             }
-                            if !self.captureViewVisible || !self.captureSession.running {
+                            if queuedCaptureGeneration != self.captureGeneration || !self.captureViewVisible || !self.captureSession.running {
                                 return
                             }
 
@@ -144,6 +146,7 @@ class ViewController: UIViewController {
     }
 
     func pauseCaptureSession() {
+        captureGeneration += 1
         timer.invalidate()
         countdown.hidden = true
         if captureSession.running {
