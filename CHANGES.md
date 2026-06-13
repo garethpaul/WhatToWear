@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-13
+
+- Rechecked camera visibility and session state before queued connection scans
+  and again before asynchronous JPEG conversion and local persistence.
+- Added a portable ordering contract for both stale capture lifecycle guards.
+
 ## 2026-06-12
 
 - Disabled persisted checkout credentials and enforced the sole pinned

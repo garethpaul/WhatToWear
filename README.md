@@ -53,10 +53,10 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 - `make verify` runs static camera privacy, local-storage, capture, display
   image, display CGImage, photo write-success, capture input-port, camera
-  session input/output, and app-launch mask focus touch, countdown timer, and
-  camera console logging checks. It also verifies complete file protection and
-  post-preview deletion for the local JPEG handoff, then attempts an Xcode
-  build when `xcodebuild` is available.
+  session input/output, stale capture callback, and app-launch mask focus
+  touch, countdown timer, and camera console logging checks. It also verifies
+  complete file protection and post-preview deletion for the local JPEG
+  handoff, then attempts an Xcode build when `xcodebuild` is available.
 - `make check` runs `make verify` with bytecode cleanup before and after.
 - `python3 scripts/check_whattowear_contracts.py` runs the static
   WhatToWear contracts without the optional Xcode build.
@@ -69,6 +69,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   `make check`.
 - Camera lifecycle contracts require pending countdowns and active capture
   sessions to stop when the app becomes inactive or the camera view is covered.
+  Queued capture work and asynchronous completions must recheck that lifecycle
+  state before scanning connections or converting and persisting a JPEG.
 - Xcode's test action or `xcodebuild test` can be used with the appropriate scheme and destination on a macOS/Xcode workstation.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -120,6 +122,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   protection, ephemeral preview handoff, and root-independent verification.
 - See `docs/plans/2026-06-10-camera-session-lifecycle.md` for interruption,
   countdown cancellation, and camera visibility controls.
+- See `docs/plans/2026-06-13-stale-camera-capture-callback.md` for rejecting
+  queued capture work after camera lifecycle changes.
 
 ## Contributing
 

@@ -32,6 +32,7 @@ Priority:
 - Keep hosted source retrieval credential-free after checkout
 - Stop countdowns and camera capture whenever the app is inactive or the
   camera screen is covered
+- Reject queued capture work and completions after camera lifecycle changes
 
 Next priorities:
 
