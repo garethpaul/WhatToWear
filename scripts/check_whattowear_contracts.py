@@ -24,6 +24,7 @@ HOSTED_VERIFICATION_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-10-hosted-sta
 PHOTO_LIFECYCLE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-10-protected-photo-lifecycle.md"
 CAMERA_SESSION_LIFECYCLE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-10-camera-session-lifecycle.md"
 CHECKOUT_CREDENTIAL_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-12-checkout-credential-boundary.md"
+STALE_CAPTURE_CALLBACK_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-13-stale-camera-capture-callback.md"
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "check.yml"
 MAKEFILE_PATH = ROOT / "Makefile"
 
@@ -164,6 +165,31 @@ def test_camera_capture_guards_connection_input_ports():
     assert_true(
         "for port in inputPorts" in source,
         "capture connection scanning must iterate the guarded input ports",
+    )
+
+
+def test_stale_capture_work_is_rejected_when_camera_is_inactive():
+    source = VIEW_CONTROLLER.read_text()
+    lifecycle_guard = "if !self.captureViewVisible || !self.captureSession.running"
+    capture_flow = source.split(
+        "dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0))",
+        1,
+    )[1].split("func didTakePhoto", 1)[0]
+
+    assert_true(
+        capture_flow.count(lifecycle_guard) == 2,
+        "queued capture work and its completion must both recheck camera lifecycle state",
+    )
+    first_guard = capture_flow.index(lifecycle_guard)
+    connection_scan = capture_flow.index("for connection in stillOutput.connections")
+    completion = capture_flow.index("captureStillImageAsynchronouslyFromConnection")
+    second_guard = capture_flow.index(lifecycle_guard, first_guard + 1)
+    jpeg_conversion = capture_flow.index(
+        "AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation(imageSampleBuffer)"
+    )
+    assert_true(
+        first_guard < connection_scan < completion < second_guard < jpeg_conversion,
+        "camera lifecycle guards must run before connection scanning and JPEG conversion",
     )
 
 
@@ -501,6 +527,7 @@ def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(PHOTO_LIFECYCLE_PLAN_PATH, "protected photo lifecycle")
     assert_completed_plan(CAMERA_SESSION_LIFECYCLE_PLAN_PATH, "camera session lifecycle")
     assert_completed_plan(CHECKOUT_CREDENTIAL_PLAN_PATH, "checkout credential boundary")
+    assert_completed_plan(STALE_CAPTURE_CALLBACK_PLAN_PATH, "stale camera capture callback")
 
 
 def main():
@@ -511,6 +538,7 @@ def main():
         test_photo_save_requires_successful_write_before_segue,
         test_photo_handoff_is_protected_and_ephemeral,
         test_camera_capture_guards_connection_input_ports,
+        test_stale_capture_work_is_rejected_when_camera_is_inactive,
         test_camera_session_guards_input_and_output_setup,
         test_focus_touch_handlers_guard_optional_touches,
         test_countdown_ignores_duplicate_timers,

@@ -54,6 +54,9 @@ class ViewController: UIViewController {
 
                 // we do this on another thread so we don't hang the UI
                 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
+                    if !self.captureViewVisible || !self.captureSession.running {
+                        return
+                    }
 
                     // find video connection
                     var videoConnection : AVCaptureConnection?
@@ -79,6 +82,9 @@ class ViewController: UIViewController {
                             (imageSampleBuffer:CMSampleBuffer!, error:NSError!) in
 
                             if error != nil || imageSampleBuffer == nil {
+                                return
+                            }
+                            if !self.captureViewVisible || !self.captureSession.running {
                                 return
                             }
 

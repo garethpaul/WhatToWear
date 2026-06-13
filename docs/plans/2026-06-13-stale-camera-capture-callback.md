@@ -1,6 +1,6 @@
 # Stale Camera Capture Callback Guard
 
-Status: In Progress
+Status: Completed
 
 ## Problem
 
@@ -22,10 +22,11 @@ been paused.
 
 ## Verification
 
-- Run the focused stale-capture lifecycle contract.
-- Run the complete portable `make check` gate locally and from an external
-  working directory.
-- Reject hostile mutations for either guard, inverted state, late ordering,
-  missing session checks, and stale plan status.
-- Run Python compilation and `git diff --check`.
-- Record Xcode availability without claiming device behavior on Linux.
+- The focused stale-capture lifecycle contract passed.
+- Local and external-directory `make check` passed all 17 portable contracts.
+- Six hostile mutations were rejected: either lifecycle guard removed,
+  inverted visibility, missing session state, JPEG conversion ordered before
+  the completion guard, and stale plan status.
+- Python compilation and `git diff --check` passed.
+- `xcodebuild` is unavailable on this Linux host, so no simulator or physical
+  device behavior is claimed.
