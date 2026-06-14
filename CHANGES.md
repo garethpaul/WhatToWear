@@ -1,5 +1,12 @@
 # Changes
 
+## 2026-06-14
+
+- Carried the originating capture generation through protected photo storage
+  and revalidated it immediately before main-thread result presentation.
+- Removed a saved photo instead of revealing stale capture work when camera
+  visibility, session state, or generation changed during persistence.
+
 ## 2026-06-13
 
 - Invalidated queued camera captures across pause-and-resume cycles with a

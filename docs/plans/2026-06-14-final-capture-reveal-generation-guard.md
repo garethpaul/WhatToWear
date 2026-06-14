@@ -1,6 +1,6 @@
 # Final Capture Reveal Generation Guard
 
-## Status: Planned
+## Status: Completed
 
 ## Context
 
@@ -35,3 +35,25 @@ present the result screen and leave a capture file behind.
 - Do not modernize Swift syntax, AVFoundation APIs, project settings, or the
   existing protected-photo format.
 - Do not merge or close stacked pull requests without explicit authorization.
+
+## Work Completed
+
+- Passed the queued capture generation into protected photo persistence.
+- Added a final main-thread generation, visibility, and session-state guard
+  before result presentation.
+- Removed the saved handoff when the final lifecycle guard rejects stale work.
+- Added portable contracts and documentation for the final reveal boundary.
+
+## Verification Results
+
+- All 18 implementation contracts passed before enabling the completed-plan
+  assertion.
+- Six isolated hostile mutations were rejected: missing generation handoff,
+  missing persistence parameter, missing final comparison, missing stale-file
+  cleanup, reveal-before-guard ordering, and incomplete plan evidence.
+- Local `make lint`, `make test`, `make build`, and `make check` passed all 19
+  portable contracts.
+- External-directory and hostile-root `make check` gates passed with repository
+  paths anchored to the protected Makefile root.
+- Each full gate truthfully skipped `xcodebuild` because it is unavailable on
+  this Linux host; no simulator, device, or native compilation is claimed.

@@ -72,7 +72,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   sessions to stop when the app becomes inactive or the camera view is covered.
   Queued capture work and asynchronous completions must recheck that lifecycle
   state and their originating generation before scanning connections or
-  converting and persisting a JPEG.
+  converting and persisting a JPEG. The successful save path rechecks that
+  generation again on the main thread before revealing the photo and removes
+  the saved handoff when the camera lifecycle changed in the meantime.
 - Xcode's test action or `xcodebuild test` can be used with the appropriate scheme and destination on a macOS/Xcode workstation.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -128,6 +130,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   queued capture work after camera lifecycle changes.
 - See `docs/plans/2026-06-13-camera-capture-generation-guard.md` for keeping
   pre-pause callbacks invalid after the camera resumes.
+- See `docs/plans/2026-06-14-final-capture-reveal-generation-guard.md` for the
+  final main-thread lifecycle check before displaying a saved photo.
 
 ## Contributing
 

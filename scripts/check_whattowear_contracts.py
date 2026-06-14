@@ -27,6 +27,7 @@ CHECKOUT_CREDENTIAL_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-12-checkout-c
 STALE_CAPTURE_CALLBACK_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-13-stale-camera-capture-callback.md"
 CAPTURE_GENERATION_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-13-camera-capture-generation-guard.md"
 MAKE_ROOT_PROTECTION_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-14-make-root-override-protection.md"
+FINAL_CAPTURE_REVEAL_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-14-final-capture-reveal-generation-guard.md"
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "check.yml"
 MAKEFILE_PATH = ROOT / "Makefile"
 
@@ -242,6 +243,53 @@ def test_stale_capture_work_is_rejected_after_camera_resumes():
         pause_method.index("captureGeneration += 1")
         < pause_method.index("captureSession.stopRunning()"),
         "capture generation must advance before an active session is stopped",
+    )
+
+
+def test_saved_photo_reveal_rechecks_capture_generation():
+    source = VIEW_CONTROLLER.read_text()
+    capture_flow = source.split("if let stillOutput = self.stillImageOutput", 1)[1].split(
+        "func didTakePhoto", 1
+    )[0]
+    save_method = source.split("func didTakePhoto", 1)[1].split(
+        "@IBOutlet var snapBtn", 1
+    )[0]
+    final_guard = (
+        "if queuedCaptureGeneration == self.captureGeneration && "
+        "self.captureViewVisible && self.captureSession.running"
+    )
+    remove_photo = (
+        "NSFileManager.defaultManager().removeItemAtPath(destinationPath, error: nil)"
+    )
+    guarded_reveal = """if queuedCaptureGeneration == self.captureGeneration && self.captureViewVisible && self.captureSession.running {
+                                self.performSegueWithIdentifier(\"displayImage\", sender: self);
+                            } else {
+                                NSFileManager.defaultManager().removeItemAtPath(destinationPath, error: nil)
+                            }"""
+
+    assert_true(
+        "self.didTakePhoto(imageData, forCaptureGeneration: queuedCaptureGeneration)"
+        in capture_flow,
+        "capture completion must pass its queued generation into photo persistence",
+    )
+    assert_true(
+        "func didTakePhoto(imageData: NSData, forCaptureGeneration queuedCaptureGeneration: Int)"
+        in source,
+        "photo persistence must retain the originating capture generation",
+    )
+    assert_true(
+        guarded_reveal in save_method,
+        "final reveal guard must remove the saved handoff in its stale branch",
+    )
+    main_dispatch = save_method.index("dispatch_async(dispatch_get_main_queue())")
+    generation_guard = save_method.index(final_guard)
+    segue = save_method.index(
+        'self.performSegueWithIdentifier("displayImage", sender: self)'
+    )
+    stale_cleanup = save_method.index(remove_photo, generation_guard)
+    assert_true(
+        main_dispatch < generation_guard < segue < stale_cleanup,
+        "saved photo reveal must recheck lifecycle state and remove stale handoffs",
     )
 
 
@@ -593,6 +641,7 @@ def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(STALE_CAPTURE_CALLBACK_PLAN_PATH, "stale camera capture callback")
     assert_completed_plan(CAPTURE_GENERATION_PLAN_PATH, "camera capture generation guard")
     assert_completed_plan(MAKE_ROOT_PROTECTION_PLAN_PATH, "Make root override protection")
+    assert_completed_plan(FINAL_CAPTURE_REVEAL_PLAN_PATH, "final capture reveal generation guard")
 
 
 def main():
@@ -605,6 +654,7 @@ def main():
         test_camera_capture_guards_connection_input_ports,
         test_stale_capture_work_is_rejected_when_camera_is_inactive,
         test_stale_capture_work_is_rejected_after_camera_resumes,
+        test_saved_photo_reveal_rechecks_capture_generation,
         test_camera_session_guards_input_and_output_setup,
         test_focus_touch_handlers_guard_optional_touches,
         test_countdown_ignores_duplicate_timers,

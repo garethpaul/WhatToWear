@@ -91,7 +91,7 @@ class ViewController: UIViewController {
                             }
 
                             if let imageData = AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation(imageSampleBuffer) {
-                                self.didTakePhoto(imageData)
+                                self.didTakePhoto(imageData, forCaptureGeneration: queuedCaptureGeneration)
                             }
 
 
@@ -106,7 +106,7 @@ class ViewController: UIViewController {
 
 
 
-    func didTakePhoto(imageData: NSData) {
+    func didTakePhoto(imageData: NSData, forCaptureGeneration queuedCaptureGeneration: Int) {
         // parse not dropbox
         if let image = UIImage(data: imageData) {
             let documentsPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as String
@@ -116,7 +116,11 @@ class ViewController: UIViewController {
                     let protectionAttributes = [NSFileProtectionKey: NSFileProtectionComplete]
                     if NSFileManager.defaultManager().setAttributes(protectionAttributes, ofItemAtPath: destinationPath, error: nil) {
                         dispatch_async(dispatch_get_main_queue()) {
-                            self.performSegueWithIdentifier("displayImage", sender: self);
+                            if queuedCaptureGeneration == self.captureGeneration && self.captureViewVisible && self.captureSession.running {
+                                self.performSegueWithIdentifier("displayImage", sender: self);
+                            } else {
+                                NSFileManager.defaultManager().removeItemAtPath(destinationPath, error: nil)
+                            }
                         }
                     } else {
                         NSFileManager.defaultManager().removeItemAtPath(destinationPath, error: nil)
