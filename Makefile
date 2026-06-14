@@ -1,6 +1,6 @@
 PYTHON ?= python3
 XCODEBUILD ?= xcodebuild
-ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 PROJECT := $(ROOT)/What To Wear.xcodeproj
 SCHEME := What To Wear
 CONTRACT_SCRIPT := $(ROOT)/scripts/check_whattowear_contracts.py

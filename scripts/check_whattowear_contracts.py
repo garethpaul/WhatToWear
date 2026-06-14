@@ -26,6 +26,7 @@ CAMERA_SESSION_LIFECYCLE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-10-camer
 CHECKOUT_CREDENTIAL_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-12-checkout-credential-boundary.md"
 STALE_CAPTURE_CALLBACK_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-13-stale-camera-capture-callback.md"
 CAPTURE_GENERATION_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-13-camera-capture-generation-guard.md"
+MAKE_ROOT_PROTECTION_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-14-make-root-override-protection.md"
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "check.yml"
 MAKEFILE_PATH = ROOT / "Makefile"
 
@@ -532,10 +533,21 @@ def test_hosted_verification_is_least_privilege_and_pinned():
 
 def test_makefile_is_root_independent():
     makefile = MAKEFILE_PATH.read_text()
+    makefile_lines = set(makefile.splitlines())
 
     assert_true(
-        "ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))" in makefile,
-        "Makefile must resolve the repository root",
+        "override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))" in makefile_lines,
+        "Makefile must protect the repository root",
+    )
+    assert_true("PYTHON ?= python3" in makefile_lines, "Makefile must preserve the Python command override")
+    assert_true("XCODEBUILD ?= xcodebuild" in makefile_lines, "Makefile must preserve the Xcode command override")
+    assert_true(
+        '\tfind "$(ROOT)" -type f \\( -name \'*.pyc\' -o -name \'*.pyo\' \\) -delete' in makefile_lines,
+        "Makefile cleanup must remove Python bytecode from the repository root",
+    )
+    assert_true(
+        '\tfind "$(ROOT)" -type d -name \'__pycache__\' -prune -exec rm -rf {} +' in makefile_lines,
+        "Makefile cleanup must remove Python cache directories from the repository root",
     )
     assert_true(
         "CONTRACT_SCRIPT := $(ROOT)/scripts/check_whattowear_contracts.py" in makefile,
@@ -580,6 +592,7 @@ def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(CHECKOUT_CREDENTIAL_PLAN_PATH, "checkout credential boundary")
     assert_completed_plan(STALE_CAPTURE_CALLBACK_PLAN_PATH, "stale camera capture callback")
     assert_completed_plan(CAPTURE_GENERATION_PLAN_PATH, "camera capture generation guard")
+    assert_completed_plan(MAKE_ROOT_PROTECTION_PLAN_PATH, "Make root override protection")
 
 
 def main():

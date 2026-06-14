@@ -1,6 +1,6 @@
 # Protect the Make Repository Root from Overrides
 
-## Status: Planned
+## Status: Completed
 
 ## Context
 
@@ -28,3 +28,20 @@ command line.
 
 - Do not alter Swift behavior, project files, workflows, or privacy policy.
 - Do not merge or close stacked pull requests without owner authorization.
+
+## Work Completed
+
+- Protected the Makefile-derived root while preserving Python and Xcode tool
+  overrides.
+- Added exact-line checker contracts and registered this completed plan.
+
+## Verification
+
+- Python compilation and all 18 static contracts passed.
+- Local, external-directory, and hostile `ROOT` full `make check` gates each
+  passed; the optional Xcode build was truthfully skipped because `xcodebuild`
+  is not installed on the Linux validation host.
+- Eight focused mutations covering protected-root derivation, tool overrides,
+  rooted cleanup, and completed-plan status were rejected.
+- Structured-file, whitespace, explicit-artifact, and changed-line credential
+  audits passed before shipment.
