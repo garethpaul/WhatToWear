@@ -1,5 +1,13 @@
 # Changes
 
+## 2026-06-16
+
+- Added a native device verification guide for the legacy Swift toolchain,
+  front-camera permission, repeated capture, interruption, retake, and local
+  photo lifecycle boundaries.
+- Added portable contracts that keep the device checklist and its explicit
+  Linux/Xcode limitation documented.
+
 ## 2026-06-14
 
 - Carried the originating capture generation through protected photo storage

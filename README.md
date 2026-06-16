@@ -79,6 +79,43 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
+## Native Device Verification
+
+This project contains Swift 2-era source and legacy AVFoundation APIs. Use a
+macOS/Xcode combination that can open the project without silently migrating
+its Swift syntax or project settings. Select a development team locally when
+signing is required; do not commit signing identities or provisioning data.
+
+Run `make check` before opening Xcode. That portable gate verifies the camera,
+privacy, lifecycle, workflow, and documentation contracts but does not compile
+the app on Linux. Native camera behavior requires a physical iOS device with a
+front camera. The iOS Simulator does not provide equivalent capture evidence.
+
+The app currently has no dedicated permission-denied UI and no explicit
+no-front-camera UI. Record those outcomes as known legacy limitations rather
+than treating a blank or inactive camera screen as a successful test.
+
+On a compatible physical device:
+
+1. Install and launch the app, grant camera permission, and confirm the live
+   front-camera preview appears.
+2. Tap the snap button repeatedly and confirm only one countdown and capture
+   sequence starts.
+3. Background the app or cover the camera screen before the countdown or
+   capture completes, then return and confirm no stale result is shown.
+4. Complete a capture and confirm the mirrored result preview appears only
+   after the countdown and successful local write.
+5. Confirm closing the result returns to the camera for a retake and does not
+   redisplay the prior capture.
+6. Repeat once with camera permission denied and record the missing dedicated
+   error state as a known limitation.
+
+The temporary JPEG uses complete file protection, remains in the app documents
+directory only long enough to hand the capture to the result controller, and
+is removed after decode or rejected stale work. The app has no upload or
+sharing path. Device inspection should confirm no `what_to_wear.jpg` handoff
+remains after the result screen loads or is dismissed.
+
 ## Configuration and Secrets
 
 - No required secret or credential file was identified in the repository scan. If you add integrations later, keep secrets out of git.
@@ -132,6 +169,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   pre-pause callbacks invalid after the camera resumes.
 - See `docs/plans/2026-06-14-final-capture-reveal-generation-guard.md` for the
   final main-thread lifecycle check before displaying a saved photo.
+- See `docs/plans/2026-06-16-device-verification-guide.md` for the native
+  front-camera, interruption, retake, and privacy verification checklist.
 
 ## Contributing
 

@@ -1,6 +1,6 @@
 # Device Verification Guide
 
-## Status: Planned
+## Status: Completed
 
 ## Context
 
@@ -39,3 +39,26 @@ behavior has been validated.
   or the capture UI.
 - Do not claim simulator or physical-device results from the Linux host.
 - Do not merge or close stacked pull requests without explicit authorization.
+
+## Work Completed
+
+- Added legacy Swift and Xcode compatibility guidance without changing project
+  settings or claiming a supported modern toolchain.
+- Added a physical-device checklist for permission, repeated taps,
+  interruptions, successful preview, retake, and denied-permission behavior.
+- Documented the protected temporary JPEG lifecycle and absence of upload or
+  sharing behavior.
+- Added a portable, whitespace-tolerant documentation contract and completed
+  plan assertion.
+
+## Verification Results
+
+- The focused device-guide contract passed after the README update.
+- Eight isolated hostile mutations were rejected: missing native-device
+  heading, toolchain boundary, denied-permission caveat, interruption check,
+  protected JPEG lifecycle, no-upload guarantee, completed status, and
+  `make check` evidence.
+- Repository and external-directory `make check` gates each passed all 20
+  portable contracts with paths rooted to this worktree.
+- `xcodebuild` is unavailable on this Linux host; no simulator, physical-device,
+  signing, or native compilation result is claimed.

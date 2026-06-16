@@ -37,10 +37,8 @@ Priority:
 
 Next priorities:
 
-- Add README setup and privacy notes
 - Add controls for retake, delete, and image lifecycle
 - Modernize camera APIs in a dedicated compatibility pass
-- Add simulator/device verification notes
 
 Contribution rules:
 

@@ -9,6 +9,7 @@ APP_PLIST = ROOT / "What To Wear" / "Info.plist"
 APP_DELEGATE = ROOT / "What To Wear" / "AppDelegate.swift"
 VIEW_CONTROLLER = ROOT / "What To Wear" / "ViewController.swift"
 DISPLAY_IMAGE = ROOT / "What To Wear" / "DisplayImage.swift"
+README_PATH = ROOT / "README.md"
 CAMERA_PRIVACY_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-08-camera-privacy-contract.md"
 CAPTURE_GUARDS_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-08-camera-capture-guards.md"
 PHOTO_WRITE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-photo-write-success-guard.md"
@@ -28,6 +29,7 @@ STALE_CAPTURE_CALLBACK_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-13-stale-c
 CAPTURE_GENERATION_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-13-camera-capture-generation-guard.md"
 MAKE_ROOT_PROTECTION_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-14-make-root-override-protection.md"
 FINAL_CAPTURE_REVEAL_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-14-final-capture-reveal-generation-guard.md"
+DEVICE_VERIFICATION_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-16-device-verification-guide.md"
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "check.yml"
 MAKEFILE_PATH = ROOT / "Makefile"
 
@@ -466,6 +468,30 @@ def test_display_image_loads_capture_safely():
     )
 
 
+def test_device_verification_guide_is_actionable():
+    readme = README_PATH.read_text()
+    normalized_readme = " ".join(readme.split()).lower()
+
+    required_guidance = [
+        "## Native Device Verification",
+        "Swift 2-era source",
+        "physical iOS device with a front camera",
+        "The app currently has no dedicated permission-denied UI",
+        "Run `make check` before opening Xcode",
+        "Tap the snap button repeatedly",
+        "Background the app or cover the camera screen",
+        "Confirm the mirrored result preview appears",
+        "Confirm closing the result returns to the camera",
+        "The temporary JPEG uses complete file protection",
+        "The app has no upload or sharing path",
+    ]
+    for guidance in required_guidance:
+        assert_true(
+            " ".join(guidance.split()).lower() in normalized_readme,
+            "README device verification guide must include: {0}".format(guidance),
+        )
+
+
 def test_launch_mask_guards_optional_window_and_assets():
     source = APP_DELEGATE.read_text()
 
@@ -642,6 +668,7 @@ def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(CAPTURE_GENERATION_PLAN_PATH, "camera capture generation guard")
     assert_completed_plan(MAKE_ROOT_PROTECTION_PLAN_PATH, "Make root override protection")
     assert_completed_plan(FINAL_CAPTURE_REVEAL_PLAN_PATH, "final capture reveal generation guard")
+    assert_completed_plan(DEVICE_VERIFICATION_PLAN_PATH, "device verification guide")
 
 
 def main():
@@ -661,6 +688,7 @@ def main():
         test_camera_session_stops_when_inactive_or_covered,
         test_camera_flow_avoids_console_logging,
         test_display_image_loads_capture_safely,
+        test_device_verification_guide_is_actionable,
         test_launch_mask_guards_optional_window_and_assets,
         test_hosted_verification_is_least_privilege_and_pinned,
         test_makefile_is_root_independent,
