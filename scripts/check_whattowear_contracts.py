@@ -30,6 +30,9 @@ CAPTURE_GENERATION_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-13-camera-capt
 MAKE_ROOT_PROTECTION_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-14-make-root-override-protection.md"
 FINAL_CAPTURE_REVEAL_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-14-final-capture-reveal-generation-guard.md"
 DEVICE_VERIFICATION_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-16-device-verification-guide.md"
+CAMERA_CONFIGURATION_LOCK_PLAN_PATH = (
+    ROOT / "docs" / "plans" / "2026-06-17-camera-configuration-lock-guard.md"
+)
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "check.yml"
 MAKEFILE_PATH = ROOT / "Makefile"
 
@@ -362,6 +365,34 @@ def test_countdown_ignores_duplicate_timers():
     )
 
 
+def test_camera_configuration_unlock_requires_successful_lock():
+    source = VIEW_CONTROLLER.read_text()
+    configure_device = source.split("func configureDevice()", 1)[1].split(
+        "func beginSession()", 1
+    )[0]
+    successful_lock = "if(device.lockForConfiguration(nil)) {"
+
+    assert_true(
+        configure_device.count("device.lockForConfiguration(nil)") == 1,
+        "configureDevice must attempt exactly one camera configuration lock",
+    )
+    assert_true(
+        configure_device.count("device.unlockForConfiguration()") == 1,
+        "configureDevice must release exactly one acquired camera configuration lock",
+    )
+    assert_true(
+        successful_lock in configure_device,
+        "configureDevice must check successful camera lock acquisition",
+    )
+    lock_branch = configure_device.split(successful_lock, 1)[1].split(
+        "\n            }", 1
+    )[0]
+    assert_true(
+        "device.unlockForConfiguration()" in lock_branch,
+        "configureDevice must unlock only inside the successful lock branch",
+    )
+
+
 def test_camera_session_stops_when_inactive_or_covered():
     view_source = VIEW_CONTROLLER.read_text()
     app_source = APP_DELEGATE.read_text()
@@ -649,6 +680,19 @@ def assert_completed_plan(path, label):
 
 
 def test_completed_plans_are_in_docs_plans():
+    checker_source = Path(__file__).read_text()
+    registered_tests = checker_source.rsplit("\ndef main():", 1)[1].split(
+        "for test in tests:", 1
+    )[0]
+    assert_true(
+        "test_camera_configuration_unlock_requires_successful_lock," in registered_tests,
+        "camera configuration lock contract must remain registered",
+    )
+    assert_true(
+        "docs/plans/2026-06-17-camera-configuration-lock-guard.md"
+        in README_PATH.read_text(),
+        "README must index the camera configuration lock plan",
+    )
     assert_completed_plan(CAMERA_PRIVACY_PLAN_PATH, "camera privacy")
     assert_completed_plan(CAPTURE_GUARDS_PLAN_PATH, "camera capture guards")
     assert_completed_plan(PHOTO_WRITE_PLAN_PATH, "photo write success guard")
@@ -669,6 +713,7 @@ def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(MAKE_ROOT_PROTECTION_PLAN_PATH, "Make root override protection")
     assert_completed_plan(FINAL_CAPTURE_REVEAL_PLAN_PATH, "final capture reveal generation guard")
     assert_completed_plan(DEVICE_VERIFICATION_PLAN_PATH, "device verification guide")
+    assert_completed_plan(CAMERA_CONFIGURATION_LOCK_PLAN_PATH, "camera configuration lock guard")
 
 
 def main():
@@ -684,6 +729,7 @@ def main():
         test_saved_photo_reveal_rechecks_capture_generation,
         test_camera_session_guards_input_and_output_setup,
         test_focus_touch_handlers_guard_optional_touches,
+        test_camera_configuration_unlock_requires_successful_lock,
         test_countdown_ignores_duplicate_timers,
         test_camera_session_stops_when_inactive_or_covered,
         test_camera_flow_avoids_console_logging,

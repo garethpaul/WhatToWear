@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-17
+
+- Guarded camera configuration unlock behind successful legacy device-lock
+  acquisition and added a portable ordering contract.
+
 ## 2026-06-16
 
 - Added a native device verification guide for the legacy Swift toolchain,

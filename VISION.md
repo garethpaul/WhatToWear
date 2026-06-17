@@ -21,6 +21,7 @@ Priority:
 - Make camera permission and storage behavior explicit
 - Guard optional camera connection data before capture
 - Guard camera session inputs and outputs before adding them
+- Release camera configuration only after successfully acquiring its lock
 - Guard optional focus touch data before moving camera focus
 - Prevent repeated snap taps from starting overlapping countdown timers
 - Avoid console logging camera discovery or setup state

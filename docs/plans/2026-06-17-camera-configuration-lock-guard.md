@@ -1,6 +1,6 @@
 # Camera Configuration Lock Guard
 
-## Status: Planned
+## Status: Completed
 
 ## Context
 
@@ -71,3 +71,16 @@ mutations are rejected, and exact diff/artifact/credential audits remain clean.
 - Push without force, open a stacked pull request against
   `lfg/whattowear-device-verification-guide-20260616`, and capture one bounded
   exact-head hosted/security snapshot.
+
+## Verification Results
+
+- The focused camera-configuration contract passed with the existing Swift
+  2-compatible checked-lock pattern.
+- Five isolated hostile mutations were rejected: unconditional unlock,
+  inverted lock success, unlock moved outside the success branch, contract
+  deregistration, and README plan unindexing.
+- Repository-root and external-directory `make check` passed all 21 portable
+  contracts; `xcodebuild` remained unavailable and was truthfully skipped.
+- Exact diff, generated-artifact, untracked-file, whitespace, file-mode,
+  credential-pattern, staged-path, and upstream audits are completed before
+  shipping.

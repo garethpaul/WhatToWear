@@ -217,9 +217,10 @@ class ViewController: UIViewController {
 
     func configureDevice() {
         if let device = captureDevice {
-            device.lockForConfiguration(nil)
-            //device.focusMode = .Locked
-            device.unlockForConfiguration()
+            if(device.lockForConfiguration(nil)) {
+                //device.focusMode = .Locked
+                device.unlockForConfiguration()
+            }
         }
 
     }

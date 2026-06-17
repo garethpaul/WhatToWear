@@ -53,7 +53,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 - `make verify` runs static camera privacy, local-storage, capture, display
   image, display CGImage, photo write-success, capture input-port, camera
-  session input/output, stale capture callback, capture generation, and
+  session input/output, checked camera configuration locking, stale capture
+  callback, capture generation, and
   app-launch mask focus touch, countdown timer, and camera console logging
   checks. It also verifies
   complete file protection and post-preview deletion for the local JPEG
@@ -75,6 +76,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   converting and persisting a JPEG. The successful save path rechecks that
   generation again on the main thread before revealing the photo and removes
   the saved handoff when the camera lifecycle changed in the meantime.
+- Camera configuration is released only after the legacy
+  `lockForConfiguration(nil)` call reports success; failed lock acquisition
+  leaves the device untouched.
 - Xcode's test action or `xcodebuild test` can be used with the appropriate scheme and destination on a macOS/Xcode workstation.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -171,6 +175,8 @@ remains after the result screen loads or is dismissed.
   final main-thread lifecycle check before displaying a saved photo.
 - See `docs/plans/2026-06-16-device-verification-guide.md` for the native
   front-camera, interruption, retake, and privacy verification checklist.
+- See `docs/plans/2026-06-17-camera-configuration-lock-guard.md` for checked
+  legacy camera configuration lock ownership.
 
 ## Contributing
 
