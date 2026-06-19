@@ -1,5 +1,19 @@
 # Changes
 
+## 2026-06-19
+
+- Serialized camera session configuration, start, stop, focus, and still-image
+  requests on one owned queue while keeping lifecycle and UI identity on the
+  main queue and protected JPEG writes on a separate persistence queue.
+- Added explicit camera authorization and front-camera availability handling,
+  atomic session configuration, and a late-configuration guard that cannot
+  undo an app or view pause.
+- Added unique per-capture protected handoffs, exact capture identity, one-shot
+  result presentation and dismissal, launch cleanup for abandoned handoffs,
+  and direct JPEG persistence that preserves orientation metadata.
+- Added 28 portable contracts and 12 hostile mutations covering camera queue,
+  lifecycle, authorization, orientation, ownership, cleanup, and UI delivery.
+
 ## 2026-06-17
 
 - Guarded camera configuration unlock behind successful legacy device-lock

@@ -33,8 +33,12 @@ DEVICE_VERIFICATION_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-16-device-ver
 CAMERA_CONFIGURATION_LOCK_PLAN_PATH = (
     ROOT / "docs" / "plans" / "2026-06-17-camera-configuration-lock-guard.md"
 )
+CAMERA_OWNERSHIP_PLAN_PATH = (
+    ROOT / "docs" / "plans" / "2026-06-19-camera-ownership-deep-review.md"
+)
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "check.yml"
 MAKEFILE_PATH = ROOT / "Makefile"
+MUTATION_SCRIPT_PATH = ROOT / "scripts" / "test_whattowear_mutations.py"
 
 EXPECTED_CAMERA_DESCRIPTION = (
     "WhatToWear uses the camera to capture a local outfit photo for preview."
@@ -87,39 +91,33 @@ def test_camera_capture_guards_nil_buffers_and_jpegs():
         "capture callback must guard JPEG data creation",
     )
     assert_true(
-        "if let image = UIImage(data: imageData)" in source,
-        "photo saving must guard UIImage decoding",
-    )
-    assert_true(
-        "if let jpegData = UIImageJPEGRepresentation(image,1.0)" in source,
-        "photo saving must guard JPEG encoding",
-    )
-    assert_true(
         "dispatch_async(dispatch_get_main_queue())" in source,
-        "segue must be dispatched back to the main queue",
+        "capture state and segue work must be dispatched back to the main queue",
     )
 
 
 def test_photo_save_requires_successful_write_before_segue():
     source = VIEW_CONTROLLER.read_text()
-    method = source.split("func didTakePhoto", 1)[1].split("@IBOutlet var snapBtn", 1)[0]
+    method = source.split("func persistCapture", 1)[1].split(
+        "func dispatchCaptureFailure", 1
+    )[0]
 
     assert_true(
-        "if jpegData.writeToFile(destinationPath, atomically: true)" in method,
+        "if imageData.writeToFile(destinationPath, atomically: true)" in method,
         "photo save must check that the local JPEG write succeeded",
     )
     assert_true(
-        method.index("if jpegData.writeToFile(destinationPath, atomically: true)")
+        method.index("if imageData.writeToFile(destinationPath, atomically: true)")
         < method.index("dispatch_async(dispatch_get_main_queue())")
-        < method.index('self.performSegueWithIdentifier("displayImage", sender: self)'),
-        "display segue must only run after the successful local write guard",
+        < method.index("self.completeCapture"),
+        "capture completion must only run after the successful local write guard",
     )
 
 
 def test_photo_handoff_is_protected_and_ephemeral():
     capture_source = VIEW_CONTROLLER.read_text()
-    save_method = capture_source.split("func didTakePhoto", 1)[1].split(
-        "@IBOutlet var snapBtn", 1
+    save_method = capture_source.split("func persistCapture", 1)[1].split(
+        "func dispatchCaptureFailure", 1
     )[0]
     display_source = DISPLAY_IMAGE.read_text()
 
@@ -135,15 +133,10 @@ def test_photo_handoff_is_protected_and_ephemeral():
         "photo saving must verify file protection before display",
     )
     assert_true(
-        save_method.index("writeToFile(destinationPath, atomically: true)")
+        save_method.index("imageData.writeToFile(destinationPath, atomically: true)")
         < save_method.index(protection_call)
-        < save_method.index('performSegueWithIdentifier("displayImage", sender: self)'),
-        "photo display must follow a successful protected write",
-    )
-    assert_true(
-        "else {\n                        NSFileManager.defaultManager().removeItemAtPath(destinationPath, error: nil)"
-        in save_method,
-        "a photo must be removed if file protection cannot be applied",
+        < save_method.index("self.completeCapture"),
+        "photo completion must follow a successful protected write",
     )
     assert_true(
         "NSFileManager.defaultManager().removeItemAtPath(destinationPath, error: nil)"
@@ -178,34 +171,28 @@ def test_camera_capture_guards_connection_input_ports():
 
 def test_stale_capture_work_is_rejected_when_camera_is_inactive():
     source = VIEW_CONTROLLER.read_text()
-    lifecycle_guard = "!self.captureViewVisible || !self.captureSession.running"
-    capture_flow = source.split(
-        "dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0))",
-        1,
-    )[1].split("func didTakePhoto", 1)[0]
+    capture_flow = source.split("func requestCapture", 1)[1].split(
+        "func persistCapture", 1
+    )[0]
+    callback_guard = (
+        "queuedCaptureGeneration != self.captureGeneration || "
+        "!self.captureViewVisible || !self.cameraReady || self.activeCaptureID != captureID"
+    )
 
     assert_true(
-        capture_flow.count(lifecycle_guard) == 2,
-        "queued capture work and its completion must both recheck camera lifecycle state",
-    )
-    first_guard = capture_flow.index(lifecycle_guard)
-    connection_scan = capture_flow.index("for connection in stillOutput.connections")
-    completion = capture_flow.index("captureStillImageAsynchronouslyFromConnection")
-    second_guard = capture_flow.index(lifecycle_guard, first_guard + 1)
-    jpeg_conversion = capture_flow.index(
-        "AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation(imageSampleBuffer)"
+        "!self.sessionConfigured || !self.captureSession.running" in capture_flow,
+        "camera queue must reject capture work when its configured session is inactive",
     )
     assert_true(
-        first_guard < connection_scan < completion < second_guard < jpeg_conversion,
-        "camera lifecycle guards must run before connection scanning and JPEG conversion",
+        callback_guard in capture_flow,
+        "capture completion must recheck main-queue lifecycle state before persistence",
     )
 
 
 def test_stale_capture_work_is_rejected_after_camera_resumes():
     source = VIEW_CONTROLLER.read_text()
-    generation_guard = "queuedCaptureGeneration != self.captureGeneration"
-    capture_flow = source.split("if let stillOutput = self.stillImageOutput", 1)[1].split(
-        "func didTakePhoto", 1
+    capture_flow = source.split("func requestCapture", 1)[1].split(
+        "func persistCapture", 1
     )[0]
     pause_method = source.split("func pauseCaptureSession()", 1)[1].split(
         "func resumeCaptureSession()", 1
@@ -215,30 +202,9 @@ def test_stale_capture_work_is_rejected_after_camera_resumes():
         "var captureGeneration = 0" in source,
         "camera lifecycle must retain a capture generation",
     )
-    queued_generation = capture_flow.index(
-        "let queuedCaptureGeneration = self.captureGeneration"
-    )
-    background_dispatch = capture_flow.index(
-        "dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0))"
-    )
     assert_true(
-        queued_generation < background_dispatch,
-        "capture work must retain its generation before background dispatch",
-    )
-    assert_true(
-        capture_flow.count(generation_guard) == 2,
-        "queued capture work and its completion must both reject an obsolete generation",
-    )
-    first_guard = capture_flow.index(generation_guard)
-    connection_scan = capture_flow.index("for connection in stillOutput.connections")
-    completion = capture_flow.index("captureStillImageAsynchronouslyFromConnection")
-    second_guard = capture_flow.index(generation_guard, first_guard + 1)
-    jpeg_conversion = capture_flow.index(
-        "AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation(imageSampleBuffer)"
-    )
-    assert_true(
-        first_guard < connection_scan < completion < second_guard < jpeg_conversion,
-        "generation guards must run before connection scanning and JPEG conversion",
+        "queuedCaptureGeneration != self.captureGeneration" in capture_flow,
+        "capture completion must reject an obsolete lifecycle generation",
     )
     assert_true(
         "captureGeneration += 1" in pause_method,
@@ -253,48 +219,221 @@ def test_stale_capture_work_is_rejected_after_camera_resumes():
 
 def test_saved_photo_reveal_rechecks_capture_generation():
     source = VIEW_CONTROLLER.read_text()
-    capture_flow = source.split("if let stillOutput = self.stillImageOutput", 1)[1].split(
-        "func didTakePhoto", 1
+    save_method = source.split("func completeCapture", 1)[1].split(
+        "func capturePath", 1
     )[0]
-    save_method = source.split("func didTakePhoto", 1)[1].split(
-        "@IBOutlet var snapBtn", 1
-    )[0]
-    final_guard = (
-        "if queuedCaptureGeneration == self.captureGeneration && "
-        "self.captureViewVisible && self.captureSession.running"
-    )
-    remove_photo = (
-        "NSFileManager.defaultManager().removeItemAtPath(destinationPath, error: nil)"
-    )
-    guarded_reveal = """if queuedCaptureGeneration == self.captureGeneration && self.captureViewVisible && self.captureSession.running {
-                                self.performSegueWithIdentifier(\"displayImage\", sender: self);
-                            } else {
-                                NSFileManager.defaultManager().removeItemAtPath(destinationPath, error: nil)
-                            }"""
 
     assert_true(
-        "self.didTakePhoto(imageData, forCaptureGeneration: queuedCaptureGeneration)"
-        in capture_flow,
-        "capture completion must pass its queued generation into photo persistence",
+        "queuedCaptureGeneration != captureGeneration" in save_method
+        and "!captureViewVisible" in save_method
+        and "!cameraReady" in save_method,
+        "saved photo reveal must recheck lifecycle state after persistence",
     )
     assert_true(
-        "func didTakePhoto(imageData: NSData, forCaptureGeneration queuedCaptureGeneration: Int)"
+        save_method.index("failCapture(captureID, destinationPath: destinationPath)")
+        < save_method.index('performSegueWithIdentifier("displayImage", sender: self)'),
+        "stale persisted photos must be cleaned before the only reveal site",
+    )
+
+
+def test_capture_identity_and_ui_delivery_are_exactly_once():
+    source = VIEW_CONTROLLER.read_text()
+    start_method = source.split("func startSnap()", 1)[1].split("func updateTime()", 1)[0]
+    assert_true(
+        "func completeCapture" in source and "func capturePath" in source,
+        "camera flow must centralize successful capture completion and owned path creation",
+    )
+    completion_method = source.split("func completeCapture", 1)[1].split(
+        "func capturePath", 1
+    )[0]
+
+    assert_true(
+        "var activeCaptureID: Int?" in source and "var nextCaptureID = 0" in source,
+        "camera flow must assign a unique identity to each in-flight capture",
+    )
+    assert_true(
+        "var revealInProgress = false" in source,
+        "camera flow must reserve the result reveal while its transition is active",
+    )
+    assert_true(
+        "activeCaptureID != nil || revealInProgress" in start_method,
+        "countdown must reject overlapping capture or reveal work",
+    )
+    assert_true(
+        "if activeCaptureID != captureID" in completion_method,
+        "capture completion must only release the matching active capture",
+    )
+    assert_true(
+        completion_method.count('performSegueWithIdentifier("displayImage", sender: self)') == 1,
+        "a capture must have one result reveal site",
+    )
+    assert_true(
+        "revealInProgress = true" in completion_method,
+        "result reveal must be reserved before performing the segue",
+    )
+
+
+def test_camera_state_and_session_mutations_use_owned_queues():
+    source = VIEW_CONTROLLER.read_text()
+    persist_method = source.split("func persistCapture", 1)[1].split(
+        "func dispatchCaptureFailure", 1
+    )[0]
+
+    assert_true(
+        'dispatch_queue_create("com.garethpaul.WhatToWear.camera", DISPATCH_QUEUE_SERIAL)'
         in source,
-        "photo persistence must retain the originating capture generation",
+        "camera session work must use one serial ownership queue",
     )
     assert_true(
-        guarded_reveal in save_method,
-        "final reveal guard must remove the saved handoff in its stale branch",
+        "dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)" not in source,
+        "capture work must not use an unowned global queue",
     )
-    main_dispatch = save_method.index("dispatch_async(dispatch_get_main_queue())")
-    generation_guard = save_method.index(final_guard)
-    segue = save_method.index(
-        'self.performSegueWithIdentifier("displayImage", sender: self)'
-    )
-    stale_cleanup = save_method.index(remove_photo, generation_guard)
     assert_true(
-        main_dispatch < generation_guard < segue < stale_cleanup,
-        "saved photo reveal must recheck lifecycle state and remove stale handoffs",
+        "dispatch_async(captureQueue)" in source,
+        "camera session mutations must be dispatched to the camera queue",
+    )
+    assert_true(
+        'dispatch_queue_create("com.garethpaul.WhatToWear.photo", DISPATCH_QUEUE_SERIAL)'
+        in source,
+        "protected JPEG persistence must use a separate serial ownership queue",
+    )
+    assert_true(
+        "dispatch_async(photoQueue)" in persist_method,
+        "photo writes must not delay camera session stop and configuration work",
+    )
+    assert_true(
+        "dispatch_async(dispatch_get_main_queue())" in source,
+        "capture callbacks must return to the main queue before reading UI lifecycle state",
+    )
+    assert_true(
+        "authorizationStatusForMediaType(AVMediaTypeVideo)" in source
+        and "requestAccessForMediaType(AVMediaTypeVideo)" in source,
+        "camera setup must handle authorization before configuring a device",
+    )
+    assert_true(
+        "captureSession.beginConfiguration()" in source
+        and "captureSession.commitConfiguration()" in source,
+        "camera input and output changes must be committed as one session configuration",
+    )
+
+
+def test_capture_handoffs_are_unique_and_preserve_encoded_images():
+    capture_source = VIEW_CONTROLLER.read_text()
+    display_source = DISPLAY_IMAGE.read_text()
+
+    assert_true(
+        '"what_to_wear_\\(captureID).jpg"' in capture_source,
+        "each capture must own a unique handoff path",
+    )
+    assert_true(
+        "imageData.writeToFile(destinationPath, atomically: true)" in capture_source,
+        "captured JPEG data must be persisted without a decode/re-encode memory spike",
+    )
+    assert_true(
+        "UIImageJPEGRepresentation" not in capture_source,
+        "camera flow must not discard capture orientation metadata by re-encoding",
+    )
+    assert_true(
+        "connection.supportsVideoOrientation" in capture_source
+        and "connection.videoOrientation = .Portrait" in capture_source,
+        "capture connection must record portrait orientation before producing the JPEG",
+    )
+    assert_true(
+        "connection.supportsVideoMirroring" in capture_source
+        and "connection.videoMirrored = true" in capture_source,
+        "front-camera capture must mirror at the capture connection instead of rebuilding pixels",
+    )
+    assert_true(
+        "var capturePath: String?" in display_source,
+        "result controller must receive the exact capture-owned handoff path",
+    )
+    assert_true(
+        "UIImage(CGImage:" not in display_source,
+        "result display must preserve the captured image orientation metadata",
+    )
+    assert_true(
+        "if let destinationPath = capturePath" in display_source,
+        "result display must fail closed when no owned handoff path was supplied",
+    )
+
+
+def test_capture_failures_release_only_owned_work_and_files():
+    source = VIEW_CONTROLLER.read_text()
+    assert_true(
+        "func failCapture" in source and "func completeCapture" in source,
+        "camera flow must centralize capture failure and completion",
+    )
+    failure_method = source.split("func failCapture", 1)[1].split(
+        "func completeCapture", 1
+    )[0]
+    assert_true(
+        "override func prepareForSegue" in source,
+        "camera flow must explicitly transfer capture ownership during the result segue",
+    )
+    prepare_method = source.split("override func prepareForSegue", 1)[1].split(
+        "@IBOutlet var snapBtn", 1
+    )[0]
+
+    assert_true(
+        "if activeCaptureID == captureID" in failure_method,
+        "capture failure must not clear a newer in-flight capture",
+    )
+    assert_true(
+        "removeItemAtPath(path" in failure_method,
+        "capture failure must remove only its owned handoff file",
+    )
+    assert_true(
+        "displayController.capturePath = pendingCapturePath" in prepare_method,
+        "segue preparation must transfer the exact owned handoff path",
+    )
+    assert_true(
+        "pendingCapturePath = nil" in prepare_method,
+        "segue preparation must consume the pending handoff exactly once",
+    )
+
+
+def test_abandoned_capture_files_are_cleaned_on_launch():
+    source = VIEW_CONTROLLER.read_text()
+    assert_true(
+        "func cleanupAbandonedCaptures()" in source,
+        "camera flow must centralize abandoned handoff cleanup",
+    )
+    cleanup_method = source.split("func cleanupAbandonedCaptures()", 1)[1].split(
+        "func configureCameraAccess()", 1
+    )[0]
+    view_did_load = source.split("override func viewDidLoad()", 1)[1].split(
+        "func cleanupAbandonedCaptures()", 1
+    )[0]
+    assert_true(
+        "cleanupAbandonedCaptures()" in view_did_load,
+        "launch must remove abandoned captures before requesting camera access",
+    )
+    assert_true(
+        'fileName.hasPrefix("what_to_wear_")' in cleanup_method
+        and 'fileName.hasSuffix(".jpg")' in cleanup_method,
+        "abandoned cleanup must be limited to capture-owned JPEG names",
+    )
+    assert_true(
+        "removeItemAtPath(filePath" in cleanup_method,
+        "abandoned capture cleanup must remove each matched handoff",
+    )
+
+
+def test_result_close_is_exactly_once():
+    source = DISPLAY_IMAGE.read_text()
+    close_method = source.split("@IBAction func close", 1)[1]
+    assert_true(
+        "var closeInProgress = false" in source,
+        "result UI must track whether dismissal has already started",
+    )
+    assert_true(
+        "if closeInProgress {\n            return\n        }" in close_method,
+        "repeated close taps must not start overlapping dismissals",
+    )
+    assert_true(
+        close_method.index("closeInProgress = true")
+        < close_method.index("POPSpringAnimation"),
+        "dismissal ownership must be reserved before starting its animation",
     )
 
 
@@ -306,11 +445,11 @@ def test_camera_session_guards_input_and_output_setup():
         "camera session setup must not force-unwrap the still image output",
     )
     assert_true(
-        "if let stillOutput = stillImageOutput" in source,
-        "camera session setup must guard the still image output",
+        "let output = AVCaptureStillImageOutput()" in source,
+        "camera session setup must create a local output before publishing it",
     )
     assert_true(
-        "captureSession.canAddOutput(stillOutput)" in source,
+        "captureSession.canAddOutput(output)" in source,
         "camera session setup must check whether the output can be added",
     )
     assert_true(
@@ -322,7 +461,7 @@ def test_camera_session_guards_input_and_output_setup():
         "camera session setup must guard the optional capture device",
     )
     assert_true(
-        "let input = AVCaptureDeviceInput(device: cameraDevice, error: &err)" in source,
+        "let input = AVCaptureDeviceInput(device: cameraDevice, error: &error)" in source,
         "camera session setup must create input from the guarded capture device",
     )
     assert_true(
@@ -343,7 +482,7 @@ def test_focus_touch_handlers_guard_optional_touches():
         "focus touch handlers must guard optional touch objects",
     )
     assert_true(
-        "touch.locationInView(self.view).x / screenWidth" in source,
+        "touch.locationInView(view).x / screenWidth" in source,
         "focus touch handlers must keep using the guarded touch location",
     )
 
@@ -356,7 +495,7 @@ def test_countdown_ignores_duplicate_timers():
         "countdown start must guard an already-running timer",
     )
     assert_true(
-        "if timer.valid {\n            return\n        }" in source,
+        "if timer.valid || activeCaptureID != nil || revealInProgress" in source,
         "countdown start must return before scheduling a duplicate timer",
     )
     assert_true(
@@ -367,29 +506,29 @@ def test_countdown_ignores_duplicate_timers():
 
 def test_camera_configuration_unlock_requires_successful_lock():
     source = VIEW_CONTROLLER.read_text()
-    configure_device = source.split("func configureDevice()", 1)[1].split(
-        "func beginSession()", 1
+    configure_device = source.split("func focusTo", 1)[1].split(
+        "let screenWidth", 1
     )[0]
-    successful_lock = "if(device.lockForConfiguration(nil)) {"
+    successful_lock = "if device.lockForConfiguration(nil) {"
 
     assert_true(
         configure_device.count("device.lockForConfiguration(nil)") == 1,
-        "configureDevice must attempt exactly one camera configuration lock",
+        "focus configuration must attempt exactly one camera configuration lock",
     )
     assert_true(
         configure_device.count("device.unlockForConfiguration()") == 1,
-        "configureDevice must release exactly one acquired camera configuration lock",
+        "focus configuration must release exactly one acquired camera configuration lock",
     )
     assert_true(
         successful_lock in configure_device,
-        "configureDevice must check successful camera lock acquisition",
+        "focus configuration must check successful camera lock acquisition",
     )
     lock_branch = configure_device.split(successful_lock, 1)[1].split(
         "\n            }", 1
     )[0]
     assert_true(
         "device.unlockForConfiguration()" in lock_branch,
-        "configureDevice must unlock only inside the successful lock branch",
+        "focus configuration must unlock only inside the successful lock branch",
     )
 
 
@@ -403,7 +542,8 @@ def test_camera_session_stops_when_inactive_or_covered():
     )
     assert_true(
         "override func viewWillAppear(animated: Bool)" in view_source
-        and "captureViewVisible = true\n        resumeCaptureSession()" in view_source,
+        and "captureViewVisible = true" in view_source
+        and "resumeCaptureSession()" in view_source,
         "the visible camera screen must resume its capture session",
     )
     assert_true(
@@ -419,16 +559,16 @@ def test_camera_session_stops_when_inactive_or_covered():
         "pausing the camera must cancel and hide an in-progress countdown",
     )
     assert_true(
-        "if captureSession.running" in pause_method
-        and "captureSession.stopRunning()" in pause_method,
+        "if self.captureSession.running" in pause_method
+        and "self.captureSession.stopRunning()" in pause_method,
         "pausing the camera must stop an active capture session",
     )
     resume_method = view_source.split("func resumeCaptureSession()", 1)[1].split(
         "override func viewDidLoad()", 1
     )[0]
     assert_true(
-        "if captureViewVisible && captureDevice != nil && !captureSession.running" in resume_method,
-        "camera restart must require a visible view, configured device, and stopped session",
+        "if self.sessionConfigured && !self.captureSession.running" in resume_method,
+        "camera restart must require a configured and stopped session",
     )
     assert_true(
         "captureSession.startRunning()" in resume_method,
@@ -445,6 +585,27 @@ def test_camera_session_stops_when_inactive_or_covered():
     assert_true(
         app_source.count("cameraController.resumeCaptureSession()") == 1,
         "app activation must resume the visible camera session exactly once",
+    )
+    assert_true(
+        "var captureLifecycleEnabled = true" in view_source,
+        "camera lifecycle must separately track whether app/view events allow capture",
+    )
+    assert_true(
+        "captureLifecycleEnabled = false" in pause_method,
+        "a pause event must disable capture before queued session work runs",
+    )
+    assert_true(
+        "captureLifecycleEnabled = true" in resume_method
+        and "startCaptureSessionIfEligible()" in resume_method,
+        "only an explicit resume event may re-enable and start capture",
+    )
+    begin_session = view_source.split("func beginSession()", 1)[1].split(
+        "func installPreviewLayer()", 1
+    )[0]
+    assert_true(
+        "self.startCaptureSessionIfEligible()" in begin_session
+        and "self.resumeCaptureSession()" not in begin_session,
+        "late camera configuration must respect the latest lifecycle pause",
     )
 
 
@@ -481,10 +642,7 @@ def test_display_image_loads_capture_safely():
         "UIImage(CGImage: image.CGImage" not in source,
         "display flow must not assume saved images have CGImage backing",
     )
-    assert_true(
-        "if let imageRef = image.CGImage" in source,
-        "display flow must guard the saved image CGImage backing before mirroring",
-    )
+    assert_true("UIImage(CGImage:" not in source, "display flow must preserve image orientation metadata")
     assert_true(
         "func showMissingPhoto()" in source,
         "display flow must centralize missing-photo fallback UI",
@@ -507,13 +665,16 @@ def test_device_verification_guide_is_actionable():
         "## Native Device Verification",
         "Swift 2-era source",
         "physical iOS device with a front camera",
-        "The app currently has no dedicated permission-denied UI",
+        "Camera unavailable",
+        "does not link directly to Settings",
         "Run `make check` before opening Xcode",
         "Tap the snap button repeatedly",
         "Background the app or cover the camera screen",
-        "Confirm the mirrored result preview appears",
-        "Confirm closing the result returns to the camera",
+        "portrait, mirrored result preview appears",
+        "Tap close repeatedly",
+        "late setup completion does not restart capture",
         "The temporary JPEG uses complete file protection",
+        "what_to_wear_*.jpg",
         "The app has no upload or sharing path",
     ]
     for guidance in required_guidance:
@@ -672,6 +833,34 @@ def test_makefile_is_root_independent():
     )
 
 
+def test_mutation_suite_guards_camera_ownership_contracts():
+    assert_true(MUTATION_SCRIPT_PATH.is_file(), "camera mutation test script must exist")
+    mutation_source = MUTATION_SCRIPT_PATH.read_text()
+    required_mutations = [
+        "serial camera queue",
+        "unique capture path",
+        "active capture identity",
+        "camera authorization",
+        "session configuration transaction",
+        "capture orientation",
+        "owned file cleanup",
+        "one-shot segue handoff",
+        "abandoned file cleanup",
+        "exactly-once close",
+        "late configuration resume",
+        "photo persistence queue",
+    ]
+    for mutation in required_mutations:
+        assert_true(
+            mutation in mutation_source,
+            "camera mutation suite must cover: {0}".format(mutation),
+        )
+    assert_true(
+        '$(PYTHON) "$(MUTATION_SCRIPT)"' in MAKEFILE_PATH.read_text(),
+        "Make test gate must execute the camera mutation suite",
+    )
+
+
 def assert_completed_plan(path, label):
     assert_true(path.is_file(), "{0} plan must live under docs/plans".format(label))
     plan_text = path.read_text()
@@ -692,6 +881,11 @@ def test_completed_plans_are_in_docs_plans():
         "docs/plans/2026-06-17-camera-configuration-lock-guard.md"
         in README_PATH.read_text(),
         "README must index the camera configuration lock plan",
+    )
+    assert_true(
+        "docs/plans/2026-06-19-camera-ownership-deep-review.md"
+        in README_PATH.read_text(),
+        "README must index the camera ownership deep-review plan",
     )
     assert_completed_plan(CAMERA_PRIVACY_PLAN_PATH, "camera privacy")
     assert_completed_plan(CAPTURE_GUARDS_PLAN_PATH, "camera capture guards")
@@ -714,6 +908,7 @@ def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(FINAL_CAPTURE_REVEAL_PLAN_PATH, "final capture reveal generation guard")
     assert_completed_plan(DEVICE_VERIFICATION_PLAN_PATH, "device verification guide")
     assert_completed_plan(CAMERA_CONFIGURATION_LOCK_PLAN_PATH, "camera configuration lock guard")
+    assert_completed_plan(CAMERA_OWNERSHIP_PLAN_PATH, "camera ownership deep review")
 
 
 def main():
@@ -727,6 +922,12 @@ def main():
         test_stale_capture_work_is_rejected_when_camera_is_inactive,
         test_stale_capture_work_is_rejected_after_camera_resumes,
         test_saved_photo_reveal_rechecks_capture_generation,
+        test_capture_identity_and_ui_delivery_are_exactly_once,
+        test_camera_state_and_session_mutations_use_owned_queues,
+        test_capture_handoffs_are_unique_and_preserve_encoded_images,
+        test_capture_failures_release_only_owned_work_and_files,
+        test_abandoned_capture_files_are_cleaned_on_launch,
+        test_result_close_is_exactly_once,
         test_camera_session_guards_input_and_output_setup,
         test_focus_touch_handlers_guard_optional_touches,
         test_camera_configuration_unlock_requires_successful_lock,
@@ -738,6 +939,7 @@ def main():
         test_launch_mask_guards_optional_window_and_assets,
         test_hosted_verification_is_least_privilege_and_pinned,
         test_makefile_is_root_independent,
+        test_mutation_suite_guards_camera_ownership_contracts,
         test_completed_plans_are_in_docs_plans,
     ]
     for test in tests:

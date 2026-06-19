@@ -4,142 +4,185 @@ import AVFoundation
 class ViewController: UIViewController {
 
     let captureSession = AVCaptureSession()
-    var previewLayer : AVCaptureVideoPreviewLayer?
-    var stillImageOutput : AVCaptureStillImageOutput?
+    let captureQueue = dispatch_queue_create("com.garethpaul.WhatToWear.camera", DISPATCH_QUEUE_SERIAL)
+    let photoQueue = dispatch_queue_create("com.garethpaul.WhatToWear.photo", DISPATCH_QUEUE_SERIAL)
+    var previewLayer: AVCaptureVideoPreviewLayer?
+    var stillImageOutput: AVCaptureStillImageOutput?
+    var captureDevice: AVCaptureDevice?
+    var sessionConfigured = false
 
     var startTime = NSTimeInterval()
     var timer = NSTimer()
-    var snapTime:Double = 5
+    var snapTime: Double = 5
     var captureViewVisible = false
+    var captureLifecycleEnabled = true
+    var cameraReady = false
     var captureGeneration = 0
-
+    var nextCaptureID = 0
+    var activeCaptureID: Int?
+    var pendingCapturePath: String?
+    var revealInProgress = false
 
     @IBOutlet var countdown: UILabel!
-
     @IBOutlet var captureBtn: UIButton!
+    @IBOutlet var snapBtn: UIButton!
 
-    // Take Picture with Button    /
     @IBAction func snapClick(sender: AnyObject) {
-        self.startSnap()
+        startSnap()
     }
 
     func startSnap() {
-
-        if timer.valid {
+        if timer.valid || activeCaptureID != nil || revealInProgress || !captureViewVisible || !cameraReady {
             return
         }
 
-        let aSelector : Selector = "updateTime"
+        let aSelector: Selector = "updateTime"
         timer = NSTimer.scheduledTimerWithTimeInterval(1, target: self, selector: aSelector, userInfo: nil, repeats: true)
         startTime = NSDate.timeIntervalSinceReferenceDate()
-        
     }
-    
 
     func updateTime() {
-        var currentTime = NSDate.timeIntervalSinceReferenceDate()
+        let currentTime = NSDate.timeIntervalSinceReferenceDate()
         var elapsedTime = currentTime - startTime
-        var seconds = snapTime-elapsedTime
+        let seconds = snapTime - elapsedTime
         if seconds > 0 {
             elapsedTime -= NSTimeInterval(seconds)
-            self.countdown.hidden = false
-            self.countdown.text = "\(Int(seconds+1))"
+            countdown.hidden = false
+            countdown.text = "\(Int(seconds + 1))"
+            return
+        }
 
-        } else {
-            self.countdown.hidden = true
-            timer.invalidate()
+        countdown.hidden = true
+        timer.invalidate()
+        if !captureViewVisible || !cameraReady || activeCaptureID != nil || revealInProgress {
+            return
+        }
 
-            // wow we are ready to save some photos
-            // setup still OutPut to save
+        nextCaptureID += 1
+        let captureID = nextCaptureID
+        let queuedCaptureGeneration = captureGeneration
+        activeCaptureID = captureID
+        requestCapture(captureID, forCaptureGeneration: queuedCaptureGeneration)
+    }
+
+    func requestCapture(captureID: Int, forCaptureGeneration queuedCaptureGeneration: Int) {
+        dispatch_async(captureQueue) {
+            if !self.sessionConfigured || !self.captureSession.running {
+                self.dispatchCaptureFailure(captureID, destinationPath: nil)
+                return
+            }
             if let stillOutput = self.stillImageOutput {
-                let queuedCaptureGeneration = self.captureGeneration
-
-                // we do this on another thread so we don't hang the UI
-                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
-                    if queuedCaptureGeneration != self.captureGeneration || !self.captureViewVisible || !self.captureSession.running {
-                        return
-                    }
-
-                    // find video connection
-                    var videoConnection : AVCaptureConnection?
-                    for connection in stillOutput.connections {
-                        // find a matching input port
-                        if let inputPorts = connection.inputPorts {
-                            for port in inputPorts {
-                                // and matching type
-                                if port.mediaType == AVMediaTypeVideo {
-                                    videoConnection = connection as? AVCaptureConnection
-                                    break
-                                }
+                var videoConnection: AVCaptureConnection?
+                for connection in stillOutput.connections {
+                    if let inputPorts = connection.inputPorts {
+                        for port in inputPorts {
+                            if port.mediaType == AVMediaTypeVideo {
+                                videoConnection = connection as? AVCaptureConnection
+                                break
                             }
                         }
-                        if videoConnection != nil {
-                            break // for connection
-                        }
                     }
-
                     if videoConnection != nil {
-                        // found the video connection, let's get the image
-                        stillOutput.captureStillImageAsynchronouslyFromConnection(videoConnection) {
-                            (imageSampleBuffer:CMSampleBuffer!, error:NSError!) in
-
-                            if error != nil || imageSampleBuffer == nil {
-                                return
-                            }
-                            if queuedCaptureGeneration != self.captureGeneration || !self.captureViewVisible || !self.captureSession.running {
-                                return
-                            }
-
-                            if let imageData = AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation(imageSampleBuffer) {
-                                self.didTakePhoto(imageData, forCaptureGeneration: queuedCaptureGeneration)
-                            }
-
-
-
-                            
-                        }
+                        break
                     }
                 }
+
+                if let connection = videoConnection {
+                    if connection.supportsVideoOrientation {
+                        connection.videoOrientation = .Portrait
+                    }
+                    if connection.supportsVideoMirroring {
+                        connection.videoMirrored = true
+                    }
+                    stillOutput.captureStillImageAsynchronouslyFromConnection(connection) {
+                        (imageSampleBuffer: CMSampleBuffer!, error: NSError!) in
+                        if error != nil || imageSampleBuffer == nil {
+                            self.dispatchCaptureFailure(captureID, destinationPath: nil)
+                            return
+                        }
+                        if let imageData = AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation(imageSampleBuffer) {
+                            dispatch_async(dispatch_get_main_queue()) {
+                                if queuedCaptureGeneration != self.captureGeneration || !self.captureViewVisible || !self.cameraReady || self.activeCaptureID != captureID {
+                                    self.failCapture(captureID, destinationPath: nil)
+                                    return
+                                }
+                                self.persistCapture(imageData, captureID: captureID, forCaptureGeneration: queuedCaptureGeneration)
+                            }
+                        } else {
+                            self.dispatchCaptureFailure(captureID, destinationPath: nil)
+                        }
+                    }
+                } else {
+                    self.dispatchCaptureFailure(captureID, destinationPath: nil)
+                }
+            } else {
+                self.dispatchCaptureFailure(captureID, destinationPath: nil)
             }
         }
     }
 
-
-
-    func didTakePhoto(imageData: NSData, forCaptureGeneration queuedCaptureGeneration: Int) {
-        // parse not dropbox
-        if let image = UIImage(data: imageData) {
-            let documentsPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as String
-            let destinationPath = documentsPath.stringByAppendingPathComponent("what_to_wear.jpg")
-            if let jpegData = UIImageJPEGRepresentation(image,1.0) {
-                if jpegData.writeToFile(destinationPath, atomically: true) {
-                    let protectionAttributes = [NSFileProtectionKey: NSFileProtectionComplete]
-                    if NSFileManager.defaultManager().setAttributes(protectionAttributes, ofItemAtPath: destinationPath, error: nil) {
-                        dispatch_async(dispatch_get_main_queue()) {
-                            if queuedCaptureGeneration == self.captureGeneration && self.captureViewVisible && self.captureSession.running {
-                                self.performSegueWithIdentifier("displayImage", sender: self);
-                            } else {
-                                NSFileManager.defaultManager().removeItemAtPath(destinationPath, error: nil)
-                            }
-                        }
-                    } else {
-                        NSFileManager.defaultManager().removeItemAtPath(destinationPath, error: nil)
+    func persistCapture(imageData: NSData, captureID: Int, forCaptureGeneration queuedCaptureGeneration: Int) {
+        let destinationPath = capturePath(captureID)
+        dispatch_async(photoQueue) {
+            if imageData.writeToFile(destinationPath, atomically: true) {
+                let protectionAttributes = [NSFileProtectionKey: NSFileProtectionComplete]
+                if NSFileManager.defaultManager().setAttributes(protectionAttributes, ofItemAtPath: destinationPath, error: nil) {
+                    dispatch_async(dispatch_get_main_queue()) {
+                        self.completeCapture(captureID, forCaptureGeneration: queuedCaptureGeneration, destinationPath: destinationPath)
                     }
+                    return
                 }
             }
+            self.dispatchCaptureFailure(captureID, destinationPath: destinationPath)
         }
-
-
-
     }
 
-    @IBOutlet var snapBtn: UIButton!
-    // If we find a device we'll store it here for later use
-    var captureDevice : AVCaptureDevice?
+    func dispatchCaptureFailure(captureID: Int, destinationPath: String?) {
+        dispatch_async(dispatch_get_main_queue()) {
+            self.failCapture(captureID, destinationPath: destinationPath)
+        }
+    }
+
+    func failCapture(captureID: Int, destinationPath: String?) {
+        if let path = destinationPath {
+            NSFileManager.defaultManager().removeItemAtPath(path, error: nil)
+        }
+        if activeCaptureID == captureID {
+            activeCaptureID = nil
+        }
+    }
+
+    func completeCapture(captureID: Int, forCaptureGeneration queuedCaptureGeneration: Int, destinationPath: String) {
+        if activeCaptureID != captureID || queuedCaptureGeneration != captureGeneration || !captureViewVisible || !cameraReady || revealInProgress {
+            failCapture(captureID, destinationPath: destinationPath)
+            return
+        }
+
+        activeCaptureID = nil
+        pendingCapturePath = destinationPath
+        revealInProgress = true
+        performSegueWithIdentifier("displayImage", sender: self)
+    }
+
+    func capturePath(captureID: Int) -> String {
+        let documentsPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as String
+        return documentsPath.stringByAppendingPathComponent("what_to_wear_\(captureID).jpg")
+    }
+
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        if segue.identifier == "displayImage" {
+            if let displayController = segue.destinationViewController as? DisplayImage {
+                displayController.capturePath = pendingCapturePath
+                pendingCapturePath = nil
+            }
+        }
+    }
 
     override func viewWillAppear(animated: Bool) {
         super.viewWillAppear(animated)
+        captureGeneration += 1
         captureViewVisible = true
+        revealInProgress = false
         resumeCaptureSession()
     }
 
@@ -151,120 +194,179 @@ class ViewController: UIViewController {
 
     func pauseCaptureSession() {
         captureGeneration += 1
+        captureLifecycleEnabled = false
+        activeCaptureID = nil
+        cameraReady = false
         timer.invalidate()
         countdown.hidden = true
-        if captureSession.running {
-            captureSession.stopRunning()
+        dispatch_async(captureQueue) {
+            if self.captureSession.running {
+                self.captureSession.stopRunning()
+            }
         }
     }
 
     func resumeCaptureSession() {
-        if captureViewVisible && captureDevice != nil && !captureSession.running {
-            captureSession.startRunning()
+        captureLifecycleEnabled = true
+        startCaptureSessionIfEligible()
+    }
+
+    func startCaptureSessionIfEligible() {
+        let resumeGeneration = captureGeneration
+        if !captureViewVisible || !captureLifecycleEnabled {
+            return
+        }
+        dispatch_async(captureQueue) {
+            if self.sessionConfigured && !self.captureSession.running {
+                self.captureSession.startRunning()
+            }
+            let running = self.sessionConfigured && self.captureSession.running
+            dispatch_async(dispatch_get_main_queue()) {
+                if resumeGeneration == self.captureGeneration && self.captureViewVisible && self.captureLifecycleEnabled {
+                    self.cameraReady = running
+                    self.snapBtn.enabled = running
+                }
+            }
         }
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        countdown.font = UIFont(name: "BadaBoom BB", size: 92)
+        snapBtn.enabled = false
+        cleanupAbandonedCaptures()
+        configureCameraAccess()
+    }
 
-        // Custom Font
-        self.countdown.font = UIFont (name: "BadaBoom BB", size: 92)
-
-
-        // Do any additional setup after loading the view, typically from a nib.
-        captureSession.sessionPreset = AVCaptureSessionPresetHigh
-        let devices = AVCaptureDevice.devices()
-
-        // Loop through all the capture devices on this phone
-        for device in devices {
-            // Make sure this particular device supports video
-            if (device.hasMediaType(AVMediaTypeVideo)) {
-                // Finally check the position and confirm we've got the back camera
-                if(device.position == AVCaptureDevicePosition.Front) {
-                    captureDevice = device as? AVCaptureDevice
-                    if captureDevice != nil {
-                        beginSession()
-                    }
+    func cleanupAbandonedCaptures() {
+        let documentsPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as String
+        let fileManager = NSFileManager.defaultManager()
+        if let fileNames = fileManager.contentsOfDirectoryAtPath(documentsPath, error: nil) as? [String] {
+            for fileName in fileNames {
+                if fileName.hasPrefix("what_to_wear_") && fileName.hasSuffix(".jpg") {
+                    let filePath = documentsPath.stringByAppendingPathComponent(fileName)
+                    fileManager.removeItemAtPath(filePath, error: nil)
                 }
             }
         }
-
     }
 
-    func focusTo(value : Float) {
+    func configureCameraAccess() {
+        let status = AVCaptureDevice.authorizationStatusForMediaType(AVMediaTypeVideo)
+        if status == .Authorized {
+            discoverCaptureDevice()
+        } else if status == .NotDetermined {
+            AVCaptureDevice.requestAccessForMediaType(AVMediaTypeVideo) { granted in
+                dispatch_async(dispatch_get_main_queue()) {
+                    if granted {
+                        self.discoverCaptureDevice()
+                    } else {
+                        self.setCameraUnavailable()
+                    }
+                }
+            }
+        } else {
+            setCameraUnavailable()
+        }
+    }
+
+    func discoverCaptureDevice() {
+        for device in AVCaptureDevice.devices() {
+            if device.hasMediaType(AVMediaTypeVideo) && device.position == AVCaptureDevicePosition.Front {
+                captureDevice = device as? AVCaptureDevice
+                break
+            }
+        }
+        if captureDevice != nil {
+            beginSession()
+        } else {
+            setCameraUnavailable()
+        }
+    }
+
+    func setCameraUnavailable() {
+        cameraReady = false
+        snapBtn.enabled = false
+        countdown.hidden = false
+        countdown.text = "Camera unavailable"
+    }
+
+    func focusTo(value: Float) {
         if let device = captureDevice {
-            if(device.lockForConfiguration(nil)) {
-                device.unlockForConfiguration()
+            dispatch_async(captureQueue) {
+                if device.lockForConfiguration(nil) {
+                    device.unlockForConfiguration()
+                }
             }
         }
     }
 
     let screenWidth = UIScreen.mainScreen().bounds.size.width
+
     override func touchesBegan(touches: NSSet, withEvent event: UIEvent) {
         if let touch = touches.anyObject() as? UITouch {
-            var touchPercent = touch.locationInView(self.view).x / screenWidth
+            let touchPercent = touch.locationInView(view).x / screenWidth
             focusTo(Float(touchPercent))
         }
-        
     }
 
     override func touchesMoved(touches: NSSet, withEvent event: UIEvent) {
         if let touch = touches.anyObject() as? UITouch {
-            var touchPercent = touch.locationInView(self.view).x / screenWidth
+            let touchPercent = touch.locationInView(view).x / screenWidth
             focusTo(Float(touchPercent))
         }
     }
 
-    func configureDevice() {
-        if let device = captureDevice {
-            if(device.lockForConfiguration(nil)) {
-                //device.focusMode = .Locked
-                device.unlockForConfiguration()
-            }
-        }
-
-    }
-
     func beginSession() {
-
-        configureDevice()
-        stillImageOutput = AVCaptureStillImageOutput()
-        let outputSettings = [ AVVideoCodecKey : AVVideoCodecJPEG ]
-
-        if let stillOutput = stillImageOutput {
-            stillOutput.outputSettings = outputSettings
-
-            // add output to session
-            if captureSession.canAddOutput(stillOutput) {
-                captureSession.addOutput(stillOutput)
-            }
-        }
-        
-
         if let cameraDevice = captureDevice {
-            var err : NSError? = nil
-            let input = AVCaptureDeviceInput(device: cameraDevice, error: &err)
+            dispatch_async(captureQueue) {
+                self.captureSession.beginConfiguration()
+                self.captureSession.sessionPreset = AVCaptureSessionPresetHigh
 
-            if err == nil && input != nil && captureSession.canAddInput(input) {
-                captureSession.addInput(input)
+                var error: NSError? = nil
+                let input = AVCaptureDeviceInput(device: cameraDevice, error: &error)
+                let output = AVCaptureStillImageOutput()
+                output.outputSettings = [AVVideoCodecKey: AVVideoCodecJPEG]
+
+                var configured = false
+                if error == nil && input != nil && self.captureSession.canAddInput(input) {
+                    self.captureSession.addInput(input)
+                    if self.captureSession.canAddOutput(output) {
+                        self.captureSession.addOutput(output)
+                        self.stillImageOutput = output
+                        configured = true
+                    } else {
+                        self.captureSession.removeInput(input)
+                    }
+                }
+
+                self.captureSession.commitConfiguration()
+                self.sessionConfigured = configured
+                dispatch_async(dispatch_get_main_queue()) {
+                    if configured {
+                        self.installPreviewLayer()
+                        self.startCaptureSessionIfEligible()
+                    } else {
+                        self.setCameraUnavailable()
+                    }
+                }
+            }
+        } else {
+            setCameraUnavailable()
+        }
+    }
+
+    func installPreviewLayer() {
+        if previewLayer == nil {
+            previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+            if let layer = previewLayer {
+                view.layer.insertSublayer(layer, atIndex: 0)
             }
         }
-
-        previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
-
-        self.view.layer.addSublayer(previewLayer)
-
-        // bringSubview to the front
-        self.view.bringSubviewToFront(snapBtn)
-        self.view.bringSubviewToFront(countdown)
-
-        // Make the snapBtn opaque
-        self.snapBtn.opaque = true
-        self.snapBtn.alpha = 0.4
-
-        // Start only after the camera view is visible.
-        previewLayer?.frame = self.view.layer.frame
-        resumeCaptureSession()
+        previewLayer?.frame = view.bounds
+        view.bringSubviewToFront(snapBtn)
+        view.bringSubviewToFront(countdown)
+        snapBtn.opaque = true
+        snapBtn.alpha = 0.4
     }
-    
 }
