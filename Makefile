@@ -1,9 +1,10 @@
 PYTHON ?= python3
 XCODEBUILD ?= xcodebuild
-ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 PROJECT := $(ROOT)/What To Wear.xcodeproj
 SCHEME := What To Wear
 CONTRACT_SCRIPT := $(ROOT)/scripts/check_whattowear_contracts.py
+MUTATION_SCRIPT := $(ROOT)/scripts/test_whattowear_mutations.py
 
 .PHONY: clean lint test build verify check
 
@@ -16,6 +17,7 @@ lint:
 
 test:
 	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(CONTRACT_SCRIPT)"
+	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(MUTATION_SCRIPT)"
 
 build:
 	@if command -v $(XCODEBUILD) >/dev/null 2>&1; then \

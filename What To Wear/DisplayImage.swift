@@ -1,53 +1,38 @@
-//
-//  DisplayImage.swift
-//  What To Wear
-//
+import UIKit
 
 class DisplayImage: UIViewController {
 
+    var capturePath: String?
+    var closeInProgress = false
 
-    
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        self.message.font = UIFont (name: "BadaBoom BB", size: 43 )
-        self.logoText.font = UIFont (name: "BadaBoom BB", size: 22 )
+        message.font = UIFont(name: "BadaBoom BB", size: 43)
+        logoText.font = UIFont(name: "BadaBoom BB", size: 22)
+        overlayView.backgroundColor = UIColor.blackColor().colorWithAlphaComponent(0.5)
+        suggestion1.tintColor = toColor("#41A378")
+        suggestion2.tintColor = toColor("#2342FF")
+        suggestedColors.backgroundColor = UIColor.clearColor()
 
-        // Opacity Overlay
-        self.overlayView.backgroundColor = UIColor.blackColor().colorWithAlphaComponent(0.5)
-
-        // Get Suggested Colors
-        self.suggestion1.tintColor = toColor("#41A378")
-        self.suggestion2.tintColor = toColor("#2342FF")
-        // Transparent suggestedColors
-        self.suggestedColors.backgroundColor = UIColor.clearColor()
-
-        // load image from "camera" into the UIImage
-        let documentsPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as String
-        let destinationPath = documentsPath.stringByAppendingPathComponent("what_to_wear.jpg")
-        if let image = UIImage(contentsOfFile: destinationPath) {
-            if let imageRef = image.CGImage {
-                // image needs to be flipped to get the view intended form the selfie
-                let flippedImage = UIImage(CGImage: imageRef, scale: 1.0, orientation: .LeftMirrored)
-
-                // display image
-                self.imageView.image = flippedImage
+        if let destinationPath = capturePath {
+            if let image = UIImage(contentsOfFile: destinationPath) {
+                imageView.image = image
             } else {
                 showMissingPhoto()
             }
+            NSFileManager.defaultManager().removeItemAtPath(destinationPath, error: nil)
+            capturePath = nil
         } else {
             showMissingPhoto()
         }
-        NSFileManager.defaultManager().removeItemAtPath(destinationPath, error: nil)
-
     }
 
     func showMissingPhoto() {
-        self.message.text = "No photo available"
-        self.suggestedColors.hidden = true
+        message.text = "No photo available"
+        suggestedColors.hidden = true
     }
 
-    // IBOutlets
     @IBOutlet var logoText: UILabel!
     @IBOutlet var imageView: UIImageView!
     @IBOutlet var message: UILabel!
@@ -57,24 +42,18 @@ class DisplayImage: UIViewController {
     @IBOutlet var overlayView: UIView!
     @IBOutlet var suggestedColors: UIView!
 
-    // IBActions
     @IBAction func close(sender: AnyObject) {
-        // close the window
+        if closeInProgress {
+            return
+        }
+        closeInProgress = true
+
         let animClose = POPSpringAnimation(propertyNamed: kPOPLayerScaleXY)
         animClose.toValue = NSValue(CGSize: CGSizeMake(0.8, 0.8))
-        self.closeBtn.layer.pop_addAnimation(animClose, forKey: "popClose")
-
-        // Once the animation has completed move back
-        animClose.completionBlock = {(animation, finished) in
-            //Code goes here
+        closeBtn.layer.pop_addAnimation(animClose, forKey: "popClose")
+        animClose.completionBlock = { (animation, finished) in
             self.closeBtn.layer.pop_removeAllAnimations()
             self.presentingViewController?.dismissViewControllerAnimated(true, completion: nil)
         }
-
-
     }
-
-
-
-
 }

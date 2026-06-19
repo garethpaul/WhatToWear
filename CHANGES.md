@@ -1,5 +1,52 @@
 # Changes
 
+## 2026-06-19
+
+- Serialized camera session configuration, start, stop, focus, and still-image
+  requests on one owned queue while keeping lifecycle and UI identity on the
+  main queue and protected JPEG writes on a separate persistence queue.
+- Added explicit camera authorization and front-camera availability handling,
+  atomic session configuration, and a late-configuration guard that cannot
+  undo an app or view pause.
+- Added unique per-capture protected handoffs, exact capture identity, one-shot
+  result presentation and dismissal, launch cleanup for abandoned handoffs,
+  and direct JPEG persistence that preserves orientation metadata.
+- Added 28 portable contracts and 12 hostile mutations covering camera queue,
+  lifecycle, authorization, orientation, ownership, cleanup, and UI delivery.
+
+## 2026-06-17
+
+- Guarded camera configuration unlock behind successful legacy device-lock
+  acquisition and added a portable ordering contract.
+
+## 2026-06-16
+
+- Added a native device verification guide for the legacy Swift toolchain,
+  front-camera permission, repeated capture, interruption, retake, and local
+  photo lifecycle boundaries.
+- Added portable contracts that keep the device checklist and its explicit
+  Linux/Xcode limitation documented.
+
+## 2026-06-14
+
+- Carried the originating capture generation through protected photo storage
+  and revalidated it immediately before main-thread result presentation.
+- Removed a saved photo instead of revealing stale capture work when camera
+  visibility, session state, or generation changed during persistence.
+
+## 2026-06-13
+
+- Invalidated queued camera captures across pause-and-resume cycles with a
+  lifecycle generation guard at both asynchronous capture boundaries.
+- Rechecked camera visibility and session state before queued connection scans
+  and again before asynchronous JPEG conversion and local persistence.
+- Added a portable ordering contract for both stale capture lifecycle guards.
+
+## 2026-06-12
+
+- Disabled persisted checkout credentials and enforced the sole pinned
+  credential-free workflow boundary.
+
 ## 2026-06-10
 
 - Stopped active camera sessions and cancelled pending countdowns when the app

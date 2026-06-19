@@ -21,6 +21,7 @@ Priority:
 - Make camera permission and storage behavior explicit
 - Guard optional camera connection data before capture
 - Guard camera session inputs and outputs before adding them
+- Release camera configuration only after successfully acquiring its lock
 - Guard optional focus touch data before moving camera focus
 - Prevent repeated snap taps from starting overlapping countdown timers
 - Avoid console logging camera discovery or setup state
@@ -29,15 +30,16 @@ Priority:
 - Avoid force-unwrapping app-launch mask assets and optional startup state
 - Treat Swift and AVFoundation APIs as legacy until documented
 - Keep portable privacy and camera-safety contracts running in hosted CI
+- Keep hosted source retrieval credential-free after checkout
 - Stop countdowns and camera capture whenever the app is inactive or the
   camera screen is covered
+- Reject queued capture work and completions after camera lifecycle changes
+- Keep pre-pause camera callbacks invalid after a later resume
 
 Next priorities:
 
-- Add README setup and privacy notes
 - Add controls for retake, delete, and image lifecycle
 - Modernize camera APIs in a dedicated compatibility pass
-- Add simulator/device verification notes
 
 Contribution rules:
 

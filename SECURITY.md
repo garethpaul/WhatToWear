@@ -35,6 +35,9 @@ Helpful reports include:
 - Camera captures should only move to the display flow after a successful local
   documents-directory write, so failed writes do not imply that a photo was
   saved.
+- Queued capture work and asynchronous completions should recheck camera view
+  visibility, session state, and lifecycle generation before scanning
+  connections or converting and persisting a JPEG.
 - The local JPEG handoff should receive complete iOS file protection before
   preview and be removed after the display controller decodes it. A protection
   failure should remove the file instead of navigating to the preview.
@@ -45,6 +48,9 @@ Helpful reports include:
 If this project requests device permissions such as location, camera, microphone, contacts, Bluetooth, health data, or local storage access, reports should describe the permission involved and whether sensitive data can be accessed, persisted, or transmitted unexpectedly. Please avoid testing against real third-party user data or accounts you do not control.
 
 ## Dependency and Supply Chain Security
+
+Hosted verification uses a credential-free checkout so its read-only token is
+not retained in the runner's Git configuration.
 
 Dependency updates should come from trusted package managers and should keep lockfiles in sync when lockfiles exist. Do not commit credentials, private keys, tokens, generated secrets, or machine-local configuration. If a vulnerability depends on a compromised package, typosquatting risk, insecure transitive dependency, or unsafe build step, include the package name, affected version, and the path through which it is used.
 
