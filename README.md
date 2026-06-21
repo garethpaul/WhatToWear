@@ -51,26 +51,31 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Testing and Verification
 
-- `make verify` runs static camera privacy, local-storage, capture identity,
+- `/usr/bin/make verify` runs static camera privacy, local-storage, capture identity,
   authorization, serial session ownership, orientation, display, photo
   write-success, capture input-port, camera configuration locking, lifecycle,
   cleanup, app-launch mask, focus touch, countdown timer, and camera console
   logging checks. It also runs 12 hostile mutations, verifies complete file
   protection and post-preview deletion for each capture-owned JPEG handoff,
   then attempts an Xcode build when `xcodebuild` is available.
-- `make check` runs `make verify` with bytecode cleanup before and after.
+- `/usr/bin/make check` runs the protected verification authority with bytecode
+  cleanup before and after. The Makefile fixes its root and shell, treats
+  `PYTHON` and `XCODEBUILD` as literal executable paths, rejects startup files
+  and unsafe execution modes, and runs adversarial authority regressions.
 - `python3 scripts/check_whattowear_contracts.py` runs the static
   WhatToWear contracts without the optional Xcode build.
 - `python3 scripts/test_whattowear_mutations.py` proves that queue, lifecycle,
   authorization, orientation, capture identity, cleanup, and one-shot UI
   regressions fail the portable contract suite.
-- GitHub Actions runs the portable `make check` gate on Python 3.10, 3.12, and
+- GitHub Actions runs the portable `/usr/bin/make check` gate on Python 3.10, 3.12, and
   3.14 using fixed Ubuntu 24.04 runners, read-only permissions, per-branch
   concurrency cancellation, and manual dispatch. Linux jobs intentionally skip
   Xcode compilation until the Swift 2-era project is migrated. Checkout
   credentials are not persisted after source retrieval.
 - Completed maintenance plans live under `docs/plans` and are checked by
-  `make check`.
+  `/usr/bin/make check`.
+- The checked Make trust boundary is documented in
+  `docs/plans/2026-06-21-make-authority-isolation.md`.
 - Camera lifecycle contracts require pending countdowns and active capture
   sessions to stop when the app becomes inactive or the camera view is covered.
   One serial queue owns session configuration and blocking start/stop work;
@@ -99,7 +104,7 @@ macOS/Xcode combination that can open the project without silently migrating
 its Swift syntax or project settings. Select a development team locally when
 signing is required; do not commit signing identities or provisioning data.
 
-Run `make check` before opening Xcode. That portable gate verifies the camera,
+Run `/usr/bin/make check` before opening Xcode. That portable gate verifies the camera,
 privacy, lifecycle, workflow, and documentation contracts but does not compile
 the app on Linux. Native camera behavior requires a physical iOS device with a
 front camera. The iOS Simulator does not provide equivalent capture evidence.
