@@ -1,5 +1,12 @@
 # Changes
 
+## 2026-06-21
+
+- Isolated repository verification from caller-controlled Make startup files,
+  shell state, execution modes, root overrides, and Python/Xcode expressions.
+- Added adversarial Make authority coverage and pinned hosted verification to
+  `/usr/bin/make` without changing camera behavior or native project settings.
+
 ## 2026-06-19
 
 - Serialized camera session configuration, start, stop, focus, and still-image

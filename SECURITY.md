@@ -52,6 +52,12 @@ If this project requests device permissions such as location, camera, microphone
 Hosted verification uses a credential-free checkout so its read-only token is
 not retained in the runner's Git configuration.
 
+Hosted and documented verification use `/usr/bin/make check`. The checked-in
+Makefile fixes its repository root and shell, rejects startup files and unsafe
+execution modes, and treats Python/Xcode overrides as literal executable paths.
+Earlier GNU Make startup parsing, explicit later `override` directives, and a
+caller's default `python3` PATH remain documented trust boundaries.
+
 Dependency updates should come from trusted package managers and should keep lockfiles in sync when lockfiles exist. Do not commit credentials, private keys, tokens, generated secrets, or machine-local configuration. If a vulnerability depends on a compromised package, typosquatting risk, insecure transitive dependency, or unsafe build step, include the package name, affected version, and the path through which it is used.
 
 ## Safe Research Guidelines

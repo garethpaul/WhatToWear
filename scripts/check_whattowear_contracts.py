@@ -39,6 +39,10 @@ CAMERA_OWNERSHIP_PLAN_PATH = (
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "check.yml"
 MAKEFILE_PATH = ROOT / "Makefile"
 MUTATION_SCRIPT_PATH = ROOT / "scripts" / "test_whattowear_mutations.py"
+MAKE_AUTHORITY_SCRIPT_PATH = ROOT / "scripts" / "test-makefile-root.sh"
+MAKE_AUTHORITY_PLAN_PATH = (
+    ROOT / "docs" / "plans" / "2026-06-21-make-authority-isolation.md"
+)
 
 EXPECTED_CAMERA_DESCRIPTION = (
     "WhatToWear uses the camera to capture a local outfit photo for preview."
@@ -667,7 +671,7 @@ def test_device_verification_guide_is_actionable():
         "physical iOS device with a front camera",
         "Camera unavailable",
         "does not link directly to Settings",
-        "Run `make check` before opening Xcode",
+        "Run `/usr/bin/make check` before opening Xcode",
         "Tap the snap button repeatedly",
         "Background the app or cover the camera screen",
         "portrait, mirrored result preview appears",
@@ -762,7 +766,10 @@ def test_hosted_verification_is_least_privilege_and_pinned():
         "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405" in workflow,
         "setup-python must use an immutable revision",
     )
-    assert_true("run: make check" in workflow, "hosted verification must run make check")
+    assert_true(
+        "run: /usr/bin/make check" in workflow,
+        "hosted verification must run the system Make authority",
+    )
     assert_true("timeout-minutes: 5" in workflow, "hosted verification must have a timeout")
     assert_true("concurrency:" in workflow, "hosted verification must define concurrency")
     assert_true(
@@ -802,35 +809,60 @@ def test_makefile_is_root_independent():
     makefile_lines = set(makefile.splitlines())
 
     assert_true(
-        "override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))" in makefile_lines,
-        "Makefile must protect the repository root",
+        "override ROOT := $(shell path=" in makefile,
+        "Makefile must derive a canonical repository root",
     )
     assert_true("PYTHON ?= python3" in makefile_lines, "Makefile must preserve the Python command override")
-    assert_true("XCODEBUILD ?= xcodebuild" in makefile_lines, "Makefile must preserve the Xcode command override")
+    assert_true("XCODEBUILD ?= /usr/bin/xcodebuild" in makefile_lines, "Makefile must use the system Xcode command by default")
     assert_true(
-        '\tfind "$(ROOT)" -type f \\( -name \'*.pyc\' -o -name \'*.pyo\' \\) -delete' in makefile_lines,
+        "/usr/bin/find '$(REPOSITORY_ROOT_LITERAL)' -type f" in makefile,
         "Makefile cleanup must remove Python bytecode from the repository root",
     )
     assert_true(
-        '\tfind "$(ROOT)" -type d -name \'__pycache__\' -prune -exec rm -rf {} +' in makefile_lines,
+        "/usr/bin/find '$(REPOSITORY_ROOT_LITERAL)' -type d -name '__pycache__'" in makefile,
         "Makefile cleanup must remove Python cache directories from the repository root",
     )
     assert_true(
-        "CONTRACT_SCRIPT := $(ROOT)/scripts/check_whattowear_contracts.py" in makefile,
+        "'$(REPOSITORY_ROOT_LITERAL)/scripts/check_whattowear_contracts.py'" in makefile,
         "Makefile must use the rooted contract script path",
     )
     assert_true(
-        "SCHEME := What To Wear" in makefile and "SCHEME := What\\ To\\ Wear" not in makefile,
+        "-scheme 'What To Wear'" in makefile,
         "Makefile must pass the Xcode scheme without literal backslashes",
     )
     assert_true(
-        makefile.count('"$(CONTRACT_SCRIPT)"') >= 2,
-        "Makefile must quote the rooted contract script path",
+        "PYTHON must be a literal executable path, not Make syntax" in makefile
+        and "XCODEBUILD must be a literal executable path, not Make syntax" in makefile,
+        "Makefile must reject executable tool Make syntax",
     )
     assert_true(
-        '$(MAKE) -f "$(ROOT)/Makefile" clean' in makefile,
-        "recursive cleanup must use the rooted Makefile",
+        "MAKEFLAGS must not be overridden for repository verification" in makefile
+        and "MAKEFILES must be empty; repository verification requires this Makefile to be loaded alone" in makefile,
+        "Makefile must reject caller flags and startup files",
     )
+    assert_true(
+        "override SHELL := /bin/sh" in makefile_lines
+        and "$(eval $(REPOSITORY_PUBLIC_RECIPES))" in makefile,
+        "Makefile must protect its shell and public recipes",
+    )
+    assert_true(
+        MAKE_AUTHORITY_SCRIPT_PATH.is_file()
+        and MAKE_AUTHORITY_SCRIPT_PATH.stat().st_mode & 0o111,
+        "Make authority harness must exist and be executable",
+    )
+    authority_source = MAKE_AUTHORITY_SCRIPT_PATH.read_text()
+    for contract in [
+        "35 target/authority cases",
+        "10 raw Make-syntax controls",
+        "2 MAKEFILE_LIST rejections",
+        "2 startup-boundary cases",
+        "7 later recipe-replacement rejections",
+        "10 mode rejections",
+    ]:
+        assert_true(
+            contract in authority_source,
+            "Make authority harness must retain {0}".format(contract),
+        )
 
 
 def test_mutation_suite_guards_camera_ownership_contracts():
@@ -856,7 +888,8 @@ def test_mutation_suite_guards_camera_ownership_contracts():
             "camera mutation suite must cover: {0}".format(mutation),
         )
     assert_true(
-        '$(PYTHON) "$(MUTATION_SCRIPT)"' in MAKEFILE_PATH.read_text(),
+        "'$(REPOSITORY_PYTHON_LITERAL)' '$(REPOSITORY_ROOT_LITERAL)/scripts/test_whattowear_mutations.py'"
+        in MAKEFILE_PATH.read_text(),
         "Make test gate must execute the camera mutation suite",
     )
 
@@ -909,6 +942,7 @@ def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(DEVICE_VERIFICATION_PLAN_PATH, "device verification guide")
     assert_completed_plan(CAMERA_CONFIGURATION_LOCK_PLAN_PATH, "camera configuration lock guard")
     assert_completed_plan(CAMERA_OWNERSHIP_PLAN_PATH, "camera ownership deep review")
+    assert_completed_plan(MAKE_AUTHORITY_PLAN_PATH, "Make authority isolation")
 
 
 def main():
