@@ -22,7 +22,8 @@ Priority:
 - Guard optional camera connection data before capture
 - Guard camera session inputs and outputs before adding them
 - Release camera configuration only after successfully acquiring its lock
-- Guard optional focus touch data before moving camera focus
+- Guard optional focus touch data, convert preview coordinates, and apply the
+  point only when the camera supports point-of-interest autofocus
 - Prevent repeated snap taps from starting overlapping countdown timers
 - Avoid console logging camera discovery or setup state
 - Show a fallback if the saved local capture cannot be displayed

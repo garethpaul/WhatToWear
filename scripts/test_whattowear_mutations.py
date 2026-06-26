@@ -49,6 +49,36 @@ MUTATIONS = [
         "// portrait orientation removed",
     ),
     (
+        "preview focus conversion",
+        VIEW_CONTROLLER,
+        "let devicePoint = layer.captureDevicePointOfInterestForPoint(touchPoint)",
+        "let devicePoint = touchPoint",
+    ),
+    (
+        "focus point support",
+        VIEW_CONTROLLER,
+        "device.focusPointOfInterestSupported && ",
+        "",
+    ),
+    (
+        "autofocus support",
+        VIEW_CONTROLLER,
+        "device.isFocusModeSupported(.AutoFocus)",
+        "true",
+    ),
+    (
+        "focus point assignment",
+        VIEW_CONTROLLER,
+        "device.focusPointOfInterest = point",
+        "// focus point assignment removed",
+    ),
+    (
+        "autofocus mode assignment",
+        VIEW_CONTROLLER,
+        "device.focusMode = .AutoFocus",
+        "// autofocus mode assignment removed",
+    ),
+    (
         "owned file cleanup",
         VIEW_CONTROLLER,
         "removeItemAtPath(path, error: nil)",
