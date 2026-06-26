@@ -55,6 +55,8 @@
 - See `docs/plans/2026-06-08-camera-privacy-contract.md` for the current camera privacy baseline.
 - See `docs/plans/2026-06-26-touch-focus-point.md` for preview-coordinate
   conversion and capability-guarded camera autofocus.
+- See `docs/plans/2026-06-26-active-application-camera-resume.md` for the
+  fail-closed app-activity gate on camera session resume.
 
 ## Agent workflow
 

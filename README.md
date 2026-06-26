@@ -55,7 +55,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   authorization, serial session ownership, orientation, display, photo
   write-success, capture input-port, camera configuration locking, lifecycle,
   cleanup, app-launch mask, focus touch, countdown timer, and camera console
-  logging checks. It also runs 17 hostile mutations, verifies complete file
+  logging checks. It also runs 18 hostile mutations, verifies complete file
   protection and post-preview deletion for each capture-owned JPEG handoff,
   then attempts an Xcode build when `xcodebuild` is available.
 - `/usr/bin/make check` runs the protected verification authority with bytecode
@@ -78,6 +78,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   `docs/plans/2026-06-21-make-authority-isolation.md`.
 - Camera lifecycle contracts require pending countdowns and active capture
   sessions to stop when the app becomes inactive or the camera view is covered.
+  Resume eligibility is fail-closed and rechecks `UIApplication` activity, so
+  initial view appearance cannot start capture before the app becomes active.
   One serial queue owns session configuration and blocking start/stop work;
   protected JPEG persistence uses another serial queue so disk I/O cannot delay
   camera interruption. Main-queue capture IDs and generations reject stale
@@ -204,6 +206,8 @@ the result screen loads or the app relaunches.
 - See `docs/plans/2026-06-19-camera-ownership-deep-review.md` for the serial
   session queue, capture identity, unique handoff, orientation, cleanup, and
   exactly-once UI review.
+- See `docs/plans/2026-06-26-active-application-camera-resume.md` for the
+  fail-closed application-state gate on camera resume.
 
 ## Contributing
 

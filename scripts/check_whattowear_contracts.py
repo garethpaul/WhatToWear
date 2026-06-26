@@ -44,6 +44,9 @@ MAKE_AUTHORITY_SCRIPT_PATH = ROOT / "scripts" / "test-makefile-root.sh"
 MAKE_AUTHORITY_PLAN_PATH = (
     ROOT / "docs" / "plans" / "2026-06-21-make-authority-isolation.md"
 )
+ACTIVE_APPLICATION_RESUME_PLAN_PATH = (
+    ROOT / "docs" / "plans" / "2026-06-26-active-application-camera-resume.md"
+)
 
 EXPECTED_CAMERA_DESCRIPTION = (
     "WhatToWear uses the camera to capture a local outfit photo for preview."
@@ -640,17 +643,18 @@ def test_camera_session_stops_when_inactive_or_covered():
         "app activation must resume the visible camera session exactly once",
     )
     assert_true(
-        "var captureLifecycleEnabled = true" in view_source,
-        "camera lifecycle must separately track whether app/view events allow capture",
+        "var captureLifecycleEnabled = false" in view_source,
+        "camera lifecycle must default closed until app/view events allow capture",
     )
     assert_true(
         "captureLifecycleEnabled = false" in pause_method,
         "a pause event must disable capture before queued session work runs",
     )
     assert_true(
-        "captureLifecycleEnabled = true" in resume_method
+        "captureLifecycleEnabled = UIApplication.sharedApplication().applicationState == .Active"
+        in resume_method
         and "startCaptureSessionIfEligible()" in resume_method,
-        "only an explicit resume event may re-enable and start capture",
+        "only an active-application resume event may re-enable and start capture",
     )
     begin_session = view_source.split("func beginSession()", 1)[1].split(
         "func installPreviewLayer()", 1
@@ -659,6 +663,31 @@ def test_camera_session_stops_when_inactive_or_covered():
         "self.startCaptureSessionIfEligible()" in begin_session
         and "self.resumeCaptureSession()" not in begin_session,
         "late camera configuration must respect the latest lifecycle pause",
+    )
+
+
+def test_camera_resume_requires_active_application():
+    source = VIEW_CONTROLLER.read_text()
+    resume_method = source.split("func resumeCaptureSession()", 1)[1].split(
+        "func startCaptureSessionIfEligible()", 1
+    )[0]
+
+    assert_true(
+        "var captureLifecycleEnabled = false" in source,
+        "camera lifecycle must default closed until the application is active",
+    )
+    assert_true(
+        "UIApplication.sharedApplication().applicationState == .Active" in resume_method,
+        "camera resume must derive eligibility from the current application state",
+    )
+    assert_true(
+        "captureLifecycleEnabled = true" not in resume_method,
+        "view appearance must not unconditionally enable capture while the app is inactive",
+    )
+    assert_true(
+        resume_method.index("captureLifecycleEnabled =")
+        < resume_method.index("startCaptureSessionIfEligible()"),
+        "camera resume must record application activity before attempting session start",
     )
 
 
@@ -1002,6 +1031,7 @@ def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(CAMERA_CONFIGURATION_LOCK_PLAN_PATH, "camera configuration lock guard")
     assert_completed_plan(CAMERA_OWNERSHIP_PLAN_PATH, "camera ownership deep review")
     assert_completed_plan(MAKE_AUTHORITY_PLAN_PATH, "Make authority isolation")
+    assert_completed_plan(ACTIVE_APPLICATION_RESUME_PLAN_PATH, "active application camera resume")
 
 
 def main():
@@ -1027,6 +1057,7 @@ def main():
         test_camera_configuration_unlock_requires_successful_lock,
         test_countdown_ignores_duplicate_timers,
         test_camera_session_stops_when_inactive_or_covered,
+        test_camera_resume_requires_active_application,
         test_camera_flow_avoids_console_logging,
         test_display_image_loads_capture_safely,
         test_device_verification_guide_is_actionable,

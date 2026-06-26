@@ -34,6 +34,7 @@ Priority:
 - Keep hosted source retrieval credential-free after checkout
 - Stop countdowns and camera capture whenever the app is inactive or the
   camera screen is covered
+- Keep camera resume fail-closed until `UIApplication` reports an active state
 - Reject queued capture work and completions after camera lifecycle changes
 - Keep pre-pause camera callbacks invalid after a later resume
 
