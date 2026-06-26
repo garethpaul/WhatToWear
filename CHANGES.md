@@ -35,7 +35,8 @@ capture eligible before `UIApplication` reached the active state.
 - `python3 scripts/check_whattowear_contracts.py` — 30 contracts passed.
 - `python3 scripts/test_whattowear_mutations.py` — 18 mutations rejected.
 - `/usr/bin/make check` and external-directory Make verification — passed.
-- Hosted verification — pending.
+- Hosted Check runs `28266047011` and `28266053525`, plus CodeQL run
+  `28266052809` — passed on the initial PR head.
 - Physical front-camera verification — not available in this Linux environment.
 
 ### Bugs / findings
@@ -48,11 +49,12 @@ capture eligible before `UIApplication` reached the active state.
 
 - Native launch/interruption timing still requires the existing physical-device
   checklist and a compatible Swift 2/Xcode environment.
+- Codex review was attempted once and skipped after HTTP 401 authentication
+  failures, as permitted by the maintenance workflow.
 
 ### Next action
 
-- Run the protected portable gate, hosted CI, and then verify cold-launch camera
-  startup on a physical front-camera device.
+- Verify cold-launch camera startup on a physical front-camera device.
 
 ## 2026-06-26 03:58 PDT - P1 - Apply the selected camera focus point
 
