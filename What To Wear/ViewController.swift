@@ -15,7 +15,7 @@ class ViewController: UIViewController {
     var timer = NSTimer()
     var snapTime: Double = 5
     var captureViewVisible = false
-    var captureLifecycleEnabled = true
+    var captureLifecycleEnabled = false
     var cameraReady = false
     var captureGeneration = 0
     var nextCaptureID = 0
@@ -207,7 +207,7 @@ class ViewController: UIViewController {
     }
 
     func resumeCaptureSession() {
-        captureLifecycleEnabled = true
+        captureLifecycleEnabled = UIApplication.sharedApplication().applicationState == .Active
         startCaptureSessionIfEligible()
     }
 

@@ -109,6 +109,12 @@ MUTATIONS = [
         "self.installPreviewLayer()\n                        self.resumeCaptureSession()",
     ),
     (
+        "active application resume",
+        VIEW_CONTROLLER,
+        "UIApplication.sharedApplication().applicationState == .Active",
+        "true",
+    ),
+    (
         "photo persistence queue",
         VIEW_CONTROLLER,
         "dispatch_async(photoQueue) {",

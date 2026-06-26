@@ -1,5 +1,59 @@
 # Changes
 
+## 2026-06-26 14:21 PDT - P1 - Gate camera resume on application activity
+
+### Summary
+
+Closed a launch-time lifecycle gap where camera view appearance could mark
+capture eligible before `UIApplication` reached the active state.
+
+### Work completed
+
+- Defaulted camera lifecycle eligibility to disabled.
+- Derived every resume attempt from the current application state before the
+  existing visibility-aware session start path runs.
+- Added one static lifecycle contract, one hostile mutation, and a completed
+  implementation plan for the inactive-launch boundary.
+
+### Threads
+
+- None; the focused Swift, contract, mutation, and documentation work was
+  completed directly.
+
+### Files changed
+
+- `What To Wear/ViewController.swift` — fail closed and gate resume on active
+  application state.
+- `scripts/check_whattowear_contracts.py` — enforce activity-derived resume.
+- `scripts/test_whattowear_mutations.py` — reject unconditional resume.
+- `README.md`, `VISION.md`, `AGENTS.md`,
+  `docs/plans/2026-06-26-active-application-camera-resume.md` — document the
+  privacy boundary and verification.
+
+### Validation
+
+- `python3 scripts/check_whattowear_contracts.py` — 30 contracts passed.
+- `python3 scripts/test_whattowear_mutations.py` — 18 mutations rejected.
+- `/usr/bin/make check` and external-directory Make verification — passed.
+- Hosted verification — pending.
+- Physical front-camera verification — not available in this Linux environment.
+
+### Bugs / findings
+
+- P1 fixed: `viewWillAppear` called an unconditional resume path, so initial
+  view appearance could enable capture while the app was still inactive and
+  before `applicationDidBecomeActive` established permission to run.
+
+### Blockers
+
+- Native launch/interruption timing still requires the existing physical-device
+  checklist and a compatible Swift 2/Xcode environment.
+
+### Next action
+
+- Run the protected portable gate, hosted CI, and then verify cold-launch camera
+  startup on a physical front-camera device.
+
 ## 2026-06-26 03:58 PDT - P1 - Apply the selected camera focus point
 
 ### Summary
