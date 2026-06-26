@@ -1,5 +1,54 @@
 # Changes
 
+## 2026-06-26 03:58 PDT - P1 - Apply the selected camera focus point
+
+### Summary
+
+Fixed the touch-focus flow so guarded touch locations now change the front
+camera's autofocus point instead of being calculated and discarded.
+
+### Work completed
+
+- Converted full view touch coordinates through the preview layer into camera
+  device coordinates.
+- Applied the converted point and `.AutoFocus` only when both capabilities are
+  supported, under the existing single successful configuration lock.
+- Added five hostile focus mutations and a completed implementation plan.
+
+### Threads
+
+- None; the focused Swift and portable-contract work was completed directly.
+
+### Files changed
+
+- `What To Wear/ViewController.swift` — apply preview-mapped touch autofocus.
+- `scripts/check_whattowear_contracts.py` — enforce conversion, support guards,
+  assignment ordering, and completed-plan registration.
+- `scripts/test_whattowear_mutations.py` — reject five focus regressions.
+- `README.md`, `VISION.md`, `AGENTS.md`, `docs/plans/2026-06-26-touch-focus-point.md`
+  — document behavior and verification.
+
+### Validation
+
+- `python3 scripts/check_whattowear_contracts.py` — 29 contracts passed.
+- `python3 scripts/test_whattowear_mutations.py` — 17 mutations rejected.
+- `/usr/bin/make check` and external-directory Make verification — passed.
+- Physical front-camera verification — not available in this Linux environment.
+
+### Bugs / findings
+
+- P1 fixed: `focusTo` previously locked and unlocked the device without using
+  the selected touch value or changing focus configuration.
+
+### Blockers
+
+- Native focus behavior still requires the existing physical-device checklist.
+
+### Next action
+
+- Verify tap and drag focus behavior on a physical front-camera device before
+  attempting the larger camera API modernization roadmap item.
+
 ## 2026-06-21
 
 - Isolated repository verification from caller-controlled Make startup files,

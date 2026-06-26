@@ -18,6 +18,7 @@ LAUNCH_MASK_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-launch-mask-guards
 INPUT_PORTS_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-camera-input-port-guards.md"
 SESSION_INPUT_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-camera-session-input-guards.md"
 FOCUS_TOUCH_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-focus-touch-guards.md"
+FOCUS_POINT_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-26-touch-focus-point.md"
 COUNTDOWN_TIMER_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-countdown-timer-guard.md"
 CAMERA_LOGGING_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-camera-console-log-guard.md"
 DISPLAY_CGIMAGE_PLAN_PATH = ROOT / "docs" / "plans" / "2026-06-09-display-cgimage-guard.md"
@@ -486,8 +487,56 @@ def test_focus_touch_handlers_guard_optional_touches():
         "focus touch handlers must guard optional touch objects",
     )
     assert_true(
-        "touch.locationInView(view).x / screenWidth" in source,
-        "focus touch handlers must keep using the guarded touch location",
+        source.count("focusAtTouch(touch)") >= 2,
+        "focus touch handlers must pass guarded touches through preview conversion",
+    )
+
+
+def test_camera_focus_applies_converted_touch_point():
+    source = VIEW_CONTROLLER.read_text()
+    focus_helper = source.split("func focusAtTouch", 1)[1].split(
+        "func focusTo", 1
+    )[0]
+    configure_device = source.split("func focusTo", 1)[1].split(
+        "override func touchesBegan", 1
+    )[0]
+
+    assert_true(
+        "if let layer = previewLayer" in focus_helper,
+        "touch focus must guard the preview layer used for coordinate conversion",
+    )
+    assert_true(
+        "let touchPoint = touch.locationInView(view)" in focus_helper,
+        "touch focus must use the full guarded touch point",
+    )
+    assert_true(
+        "let devicePoint = layer.captureDevicePointOfInterestForPoint(touchPoint)" in focus_helper,
+        "touch focus must convert preview coordinates into camera device coordinates",
+    )
+    assert_true(
+        "focusTo(devicePoint)" in focus_helper,
+        "touch focus must pass the converted point to camera configuration",
+    )
+    assert_true(
+        "device.focusPointOfInterestSupported" in configure_device,
+        "camera focus must guard point-of-interest support",
+    )
+    assert_true(
+        "device.isFocusModeSupported(.AutoFocus)" in configure_device,
+        "camera focus must guard autofocus support",
+    )
+    assert_true(
+        "device.focusPointOfInterest = point" in configure_device,
+        "camera focus must apply the converted point",
+    )
+    assert_true(
+        "device.focusMode = .AutoFocus" in configure_device,
+        "camera focus must trigger autofocus at the converted point",
+    )
+    assert_true(
+        configure_device.find("device.focusPointOfInterest = point")
+        < configure_device.find("device.focusMode = .AutoFocus"),
+        "camera focus must set the point before triggering autofocus",
     )
 
 
@@ -511,7 +560,7 @@ def test_countdown_ignores_duplicate_timers():
 def test_camera_configuration_unlock_requires_successful_lock():
     source = VIEW_CONTROLLER.read_text()
     configure_device = source.split("func focusTo", 1)[1].split(
-        "let screenWidth", 1
+        "override func touchesBegan", 1
     )[0]
     successful_lock = "if device.lockForConfiguration(nil) {"
 
@@ -875,6 +924,11 @@ def test_mutation_suite_guards_camera_ownership_contracts():
         "camera authorization",
         "session configuration transaction",
         "capture orientation",
+        "preview focus conversion",
+        "focus point support",
+        "autofocus support",
+        "focus point assignment",
+        "autofocus mode assignment",
         "owned file cleanup",
         "one-shot segue handoff",
         "abandoned file cleanup",
@@ -911,6 +965,10 @@ def test_completed_plans_are_in_docs_plans():
         "camera configuration lock contract must remain registered",
     )
     assert_true(
+        "test_camera_focus_applies_converted_touch_point," in registered_tests,
+        "camera touch focus contract must remain registered",
+    )
+    assert_true(
         "docs/plans/2026-06-17-camera-configuration-lock-guard.md"
         in README_PATH.read_text(),
         "README must index the camera configuration lock plan",
@@ -928,6 +986,7 @@ def test_completed_plans_are_in_docs_plans():
     assert_completed_plan(INPUT_PORTS_PLAN_PATH, "camera input port guards")
     assert_completed_plan(SESSION_INPUT_PLAN_PATH, "camera session input guards")
     assert_completed_plan(FOCUS_TOUCH_PLAN_PATH, "focus touch guards")
+    assert_completed_plan(FOCUS_POINT_PLAN_PATH, "touch focus point")
     assert_completed_plan(COUNTDOWN_TIMER_PLAN_PATH, "countdown timer guard")
     assert_completed_plan(CAMERA_LOGGING_PLAN_PATH, "camera console log guard")
     assert_completed_plan(DISPLAY_CGIMAGE_PLAN_PATH, "display CGImage guard")
@@ -964,6 +1023,7 @@ def main():
         test_result_close_is_exactly_once,
         test_camera_session_guards_input_and_output_setup,
         test_focus_touch_handlers_guard_optional_touches,
+        test_camera_focus_applies_converted_touch_point,
         test_camera_configuration_unlock_requires_successful_lock,
         test_countdown_ignores_duplicate_timers,
         test_camera_session_stops_when_inactive_or_covered,

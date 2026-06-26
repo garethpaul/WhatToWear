@@ -53,6 +53,8 @@
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
 - See `docs/plans/2026-06-08-camera-privacy-contract.md` for the current camera privacy baseline.
+- See `docs/plans/2026-06-26-touch-focus-point.md` for preview-coordinate
+  conversion and capability-guarded camera autofocus.
 
 ## Agent workflow
 

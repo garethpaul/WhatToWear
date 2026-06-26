@@ -55,7 +55,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   authorization, serial session ownership, orientation, display, photo
   write-success, capture input-port, camera configuration locking, lifecycle,
   cleanup, app-launch mask, focus touch, countdown timer, and camera console
-  logging checks. It also runs 12 hostile mutations, verifies complete file
+  logging checks. It also runs 17 hostile mutations, verifies complete file
   protection and post-preview deletion for each capture-owned JPEG handoff,
   then attempts an Xcode build when `xcodebuild` is available.
 - `/usr/bin/make check` runs the protected verification authority with bytecode
@@ -93,6 +93,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Camera configuration is released only after the legacy
   `lockForConfiguration(nil)` call reports success; failed lock acquisition
   leaves the device untouched.
+- Guarded camera touches are converted through the preview layer into device
+  coordinates, then applied as the autofocus point only when the front camera
+  supports both point-of-interest focus and autofocus mode.
 - Xcode's test action or `xcodebuild test` can be used with the appropriate scheme and destination on a macOS/Xcode workstation.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -176,6 +179,8 @@ the result screen loads or the app relaunches.
   capture session input and output setup.
 - See `docs/plans/2026-06-09-focus-touch-guards.md` for guarded touch handling
   in the camera focus controls.
+- See `docs/plans/2026-06-26-touch-focus-point.md` for preview-coordinate
+  conversion and capability-guarded autofocus application.
 - See `docs/plans/2026-06-09-countdown-timer-guard.md` for duplicate countdown
   timer prevention.
 - See `docs/plans/2026-06-09-camera-console-log-guard.md` for camera setup

@@ -291,29 +291,37 @@ class ViewController: UIViewController {
         countdown.text = "Camera unavailable"
     }
 
-    func focusTo(value: Float) {
+    func focusAtTouch(touch: UITouch) {
+        if let layer = previewLayer {
+            let touchPoint = touch.locationInView(view)
+            let devicePoint = layer.captureDevicePointOfInterestForPoint(touchPoint)
+            focusTo(devicePoint)
+        }
+    }
+
+    func focusTo(point: CGPoint) {
         if let device = captureDevice {
             dispatch_async(captureQueue) {
                 if device.lockForConfiguration(nil) {
+                    if device.focusPointOfInterestSupported && device.isFocusModeSupported(.AutoFocus) {
+                        device.focusPointOfInterest = point
+                        device.focusMode = .AutoFocus
+                    }
                     device.unlockForConfiguration()
                 }
             }
         }
     }
 
-    let screenWidth = UIScreen.mainScreen().bounds.size.width
-
     override func touchesBegan(touches: NSSet, withEvent event: UIEvent) {
         if let touch = touches.anyObject() as? UITouch {
-            let touchPercent = touch.locationInView(view).x / screenWidth
-            focusTo(Float(touchPercent))
+            focusAtTouch(touch)
         }
     }
 
     override func touchesMoved(touches: NSSet, withEvent event: UIEvent) {
         if let touch = touches.anyObject() as? UITouch {
-            let touchPercent = touch.locationInView(view).x / screenWidth
-            focusTo(Float(touchPercent))
+            focusAtTouch(touch)
         }
     }
 
